@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rev Whisper — Florida STR Lead Enrichment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dune: #32302F;
+    --fern: #4A6741;
+    --white: #FFFFFF;
+    --stone: #E0DCDA;
+    --bg-subtle: #F8F7F6;
+    --dot-color: rgba(50, 48, 47, 0.05);
+    --heading: 'Lora', 'Georgia', serif;
+    --body: 'DM Sans', 'system-ui', sans-serif;
+    --mono: 'DM Mono', 'SF Mono', 'Fira Code', monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--white);
+    color: var(--dune);
+    font-family: var(--body);
+    font-size: 18px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  .dots {
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 120px 32px 80px;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--heading);
+    font-size: 20px;
+    margin-bottom: 64px;
+  }
+  .wordmark .rev { color: var(--fern); }
+  .wordmark .whisper { color: var(--dune); }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fern);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 400ms var(--ease) forwards;
+  }
+  h1 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.08;
+    letter-spacing: -1.5px;
+    color: var(--dune);
+    max-width: 900px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 400ms var(--ease) 80ms forwards;
+  }
+  .lead {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--dune);
+    opacity: 0.75;
+    max-width: 640px;
+    margin-bottom: 80px;
+    opacity: 0;
+    animation: fadeUp 400ms var(--ease) 160ms forwards;
+    animation-fill-mode: forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lead { opacity: 0.75 !important; }
+
+  h2 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--stone);
+  }
+
+  .tier-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--stone);
+    border: 1px solid var(--stone);
+    margin-bottom: 48px;
+  }
+  .tier {
+    background: var(--white);
+    padding: 32px 36px;
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 32px;
+    align-items: center;
+    transition: background-color 150ms var(--ease);
+  }
+  .tier:hover { background: var(--bg-subtle); }
+  .tier-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--fern);
+  }
+  .tier-body h3 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: 26px;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+  .tier-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.55;
+    letter-spacing: 0.5px;
+  }
+  .tier-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tier-link {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    text-decoration: none;
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease);
+    white-space: nowrap;
+  }
+  .tier-link:hover {
+    background: var(--dune);
+    color: var(--white);
+    border-color: var(--dune);
+  }
+  .tier-link.primary {
+    border-color: var(--fern);
+    color: var(--fern);
+  }
+  .tier-link.primary:hover {
+    background: var(--fern);
+    color: var(--white);
+    border-color: var(--fern);
+  }
+  .tier.pending {
+    opacity: 0.5;
+  }
+  .tier.pending .tier-link {
+    pointer-events: none;
+  }
+
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--stone);
+    border: 1px solid var(--stone);
+    margin-bottom: 72px;
+  }
+  @media (max-width: 640px) {
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .tier { grid-template-columns: 1fr; text-align: left; }
+    .tier-links { margin-top: 12px; }
+  }
+  .stat {
+    background: var(--white);
+    padding: 28px 20px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 400;
+    color: var(--dune);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .stat-val.fern { color: var(--fern); }
+  .stat-lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+  }
+
+  footer {
+    margin-top: 96px;
+    padding-top: 24px;
+    border-top: 1px solid var(--stone);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dune);
+    opacity: 0.5;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="dots"></div>
+
+<div class="container">
+
+  <div class="wordmark">
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+      <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z"
+            stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22"
+            stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+  </div>
+
+  <div class="eyebrow">Florida STR Outreach · Internal Enrichment</div>
+  <h1>Florida short-term rental property managers, enriched and ready for outreach.</h1>
+  <p class="lead">Automated enrichment pipeline that turns the raw FL permit database into verified, outreach-ready leads. Every tier cleaned, scored, batched, enriched, verified, and published here.</p>
+
+  <!-- Stats strip -->
+  <div class="stats-strip">
+    <div class="stat">
+      <div class="stat-val fern">412</div>
+      <div class="stat-lbl">Leads Enriched</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">94%</div>
+      <div class="stat-lbl">Owner Name</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">52%</div>
+      <div class="stat-lbl">LinkedIn</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">9</div>
+      <div class="stat-lbl">Batches</div>
+    </div>
+  </div>
+
+  <h2>Enrichment Tiers</h2>
+  <div class="tier-grid">
+
+    <div class="tier">
+      <div class="tier-num">TIER 01</div>
+      <div class="tier-body">
+        <h3>25–49 Listings</h3>
+        <div class="tier-meta">412 LEADS · 9 BATCHES · ENRICHED &amp; VERIFIED</div>
+      </div>
+      <div class="tier-links">
+        <a class="tier-link" href="25-49%20Listings/enrichment_process.html">Process</a>
+        <a class="tier-link primary" href="25-49%20Listings/enriched_leads.html">View Leads →</a>
+      </div>
+    </div>
+
+    <div class="tier pending">
+      <div class="tier-num">TIER 02</div>
+      <div class="tier-body">
+        <h3>50–99 Listings</h3>
+        <div class="tier-meta">NOT YET ENRICHED · ~75 LEADS</div>
+      </div>
+      <div class="tier-links">
+        <span class="tier-link">Pending</span>
+      </div>
+    </div>
+
+    <div class="tier pending">
+      <div class="tier-num">TIER 03</div>
+      <div class="tier-body">
+        <h3>100–199 Listings</h3>
+        <div class="tier-meta">NOT YET ENRICHED · ~135 LEADS</div>
+      </div>
+      <div class="tier-links">
+        <span class="tier-link">Pending</span>
+      </div>
+    </div>
+
+    <div class="tier pending">
+      <div class="tier-num">TIER 04</div>
+      <div class="tier-body">
+        <h3>200+ Listings</h3>
+        <div class="tier-meta">NOT YET ENRICHED · ~95 LEADS</div>
+      </div>
+      <div class="tier-links">
+        <span class="tier-link">Pending</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>Rev Whisper · Florida STR Outreach</span>
+    <span id="lastUpdate">Last updated · auto</span>
+  </footer>
+
+</div>
+
+<script>
+  // Inject last-deploy time if available
+  document.getElementById('lastUpdate').textContent = 'Last updated · ' + new Date().toISOString().slice(0, 10);
+</script>
+
+</body>
+</html>

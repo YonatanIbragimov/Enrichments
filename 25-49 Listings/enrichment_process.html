@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rev Whisper — Lead Enrichment Process</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════
+     Rev Whisper Brand System
+     ═══════════════════════════════════════════ */
+  :root {
+    --dune: #32302F;
+    --fern: #4A6741;
+    --white: #FFFFFF;
+    --stone: #E0DCDA;
+    --bg-subtle: #F8F7F6;
+    --dot-color: rgba(50, 48, 47, 0.05);
+
+    --heading: 'Lora', 'Georgia', serif;
+    --body: 'DM Sans', 'system-ui', sans-serif;
+    --mono: 'DM Mono', 'SF Mono', 'Fira Code', monospace;
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-micro: 150ms;
+    --dur-elem: 250ms;
+    --dur-page: 400ms;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--white);
+    color: var(--dune);
+    font-family: var(--body);
+    font-size: 18px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* Dotted texture */
+  .dots {
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scroll progress indicator */
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background: var(--fern);
+    z-index: 100;
+    transition: width 120ms linear;
+  }
+
+  /* Top nav */
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--stone);
+    z-index: 50;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--heading);
+    font-size: 18px;
+    text-decoration: none;
+  }
+  .wordmark .rev { color: var(--fern); }
+  .wordmark .whisper { color: var(--dune); }
+  .topbar-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.55;
+    letter-spacing: 0.5px;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 96px 32px 120px;
+  }
+
+  /* ─── Hero ─── */
+  .hero { margin-bottom: 140px; }
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fern);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp var(--dur-page) var(--ease) forwards;
+  }
+  .hero h1 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: var(--dune);
+    max-width: 900px;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp var(--dur-page) var(--ease) 100ms forwards;
+  }
+  .hero h1 .emphasis {
+    position: relative;
+    display: inline-block;
+  }
+  .hero h1 .emphasis .underline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -14px;
+    height: 14px;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .hero h1 .emphasis .underline path {
+    fill: none;
+    stroke: var(--fern);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: drawMark 900ms var(--ease) 900ms forwards;
+  }
+  @keyframes drawMark {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--stone);
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp var(--dur-page) var(--ease) 300ms forwards;
+  }
+  .hero-meta div { display: flex; flex-direction: column; gap: 6px; }
+  .hero-meta .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+  }
+  .hero-meta .value {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--dune);
+    font-weight: 500;
+  }
+
+  /* ─── Animated funnel (hero visualization) ─── */
+  .funnel-viz {
+    margin-top: 64px;
+    padding: 48px;
+    border: 1px solid var(--stone);
+    background: var(--bg-subtle);
+    opacity: 0;
+    animation: fadeUp var(--dur-page) var(--ease) 400ms forwards;
+  }
+  .funnel-stages {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    align-items: end;
+    min-height: 140px;
+  }
+  @media (max-width: 800px) {
+    .funnel-stages { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  }
+  .funnel-stage { text-align: left; position: relative; }
+  .funnel-stage .stage-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--fern);
+    margin-bottom: 8px;
+  }
+  .funnel-stage .stage-label {
+    font-family: var(--heading);
+    font-size: 18px;
+    color: var(--dune);
+    margin-bottom: 12px;
+  }
+  .funnel-stage .stage-val {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--dune);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .funnel-stage .stage-bar {
+    height: 2px;
+    background: var(--stone);
+    margin-top: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .funnel-stage .stage-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--fern);
+    width: 0;
+    transition: width 1.2s var(--ease);
+  }
+  .funnel-viz.animate .stage-fill { width: var(--w); }
+
+  /* ─── Section ─── */
+  section {
+    margin-bottom: 140px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity var(--dur-page) var(--ease), transform var(--dur-page) var(--ease);
+  }
+  section.visible { opacity: 1; transform: translateY(0); }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    align-items: baseline;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--stone);
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--fern);
+    letter-spacing: 1.5px;
+    padding-top: 8px;
+  }
+  .section-head h2 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--dune);
+  }
+  .section-intro {
+    grid-column: 2;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--dune);
+    opacity: 0.72;
+    max-width: 640px;
+    margin-top: 20px;
+  }
+  .section-body {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+  }
+  .section-body > :nth-child(1) { grid-column: 2; }
+
+  /* ─── Rules ─── */
+  .rules { border-top: 1px solid var(--stone); }
+  .rule {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--stone);
+    align-items: baseline;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--dur-elem) var(--ease), transform var(--dur-elem) var(--ease);
+  }
+  .rule.visible { opacity: 1; transform: translateY(0); }
+  .rule .bullet {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fern);
+    padding-top: 4px;
+  }
+  .rule strong {
+    font-weight: 500;
+    font-size: 18px;
+    display: block;
+    margin-bottom: 4px;
+    color: var(--dune);
+  }
+  .rule .dim {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--dune);
+    opacity: 0.65;
+  }
+  .rule .metric {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--fern);
+    font-weight: 500;
+    white-space: nowrap;
+    padding-top: 4px;
+  }
+
+  /* ─── Dot funnel visualization for cleaning ─── */
+  .dot-funnel {
+    margin-top: 48px;
+    padding: 40px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--stone);
+  }
+  .dot-funnel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fern);
+    margin-bottom: 24px;
+  }
+  .dot-grid {
+    display: grid;
+    grid-template-columns: repeat(50, 1fr);
+    gap: 3px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 640px) {
+    .dot-grid { grid-template-columns: repeat(25, 1fr); }
+  }
+  .dot-pixel {
+    aspect-ratio: 1;
+    background: var(--dune);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.3);
+    transition: opacity 500ms var(--ease), transform 500ms var(--ease), background-color 400ms var(--ease);
+  }
+  .dot-pixel.in { opacity: 0.55; transform: scale(1); }
+  .dot-pixel.in.removed { opacity: 0.12; background: var(--dune); }
+  .dot-pixel.in.kept { opacity: 1; background: var(--fern); }
+  .dot-legend {
+    display: flex;
+    gap: 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.7;
+    flex-wrap: wrap;
+  }
+  .dot-legend-item { display: flex; align-items: center; gap: 8px; }
+  .dot-sample {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot-sample.raw { background: var(--dune); opacity: 0.55; }
+  .dot-sample.removed { background: var(--dune); opacity: 0.12; }
+  .dot-sample.kept { background: var(--fern); }
+
+  /* ─── Scoring example card ─── */
+  .score-example {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1px;
+    background: var(--stone);
+    border: 1px solid var(--stone);
+  }
+  @media (max-width: 800px) {
+    .score-example { grid-template-columns: 1fr; }
+  }
+  .score-weights, .score-display {
+    background: var(--white);
+    padding: 32px;
+  }
+  .score-weights-title, .score-display-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fern);
+    margin-bottom: 20px;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--stone);
+  }
+  .score-row:last-child { border-bottom: none; }
+  .score-row-label {
+    font-size: 14px;
+    color: var(--dune);
+  }
+  .score-bar-wrap {
+    width: 120px;
+    height: 2px;
+    background: var(--stone);
+    position: relative;
+  }
+  .score-bar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--fern);
+    width: 0;
+    transition: width 1s var(--ease);
+  }
+  .score-example.animate .score-bar { width: var(--w); }
+  .score-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dune);
+    opacity: 0.75;
+    min-width: 40px;
+    text-align: right;
+  }
+  .score-company-name {
+    font-family: var(--heading);
+    font-size: 18px;
+    color: var(--dune);
+    margin-bottom: 4px;
+  }
+  .score-company-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.55;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .score-total {
+    font-family: var(--mono);
+    font-size: 72px;
+    font-weight: 400;
+    color: var(--fern);
+    line-height: 1;
+    letter-spacing: -3px;
+    margin-bottom: 8px;
+  }
+  .score-total-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+  }
+  .score-rank {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--stone);
+    font-size: 13px;
+    color: var(--dune);
+    opacity: 0.7;
+    line-height: 1.5;
+  }
+  .score-rank .mono {
+    font-family: var(--mono);
+    color: var(--fern);
+    font-weight: 500;
+  }
+
+  /* ─── Batch distribution ─── */
+  .batch-viz {
+    margin-top: 32px;
+    padding: 40px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--stone);
+  }
+  .batch-viz-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fern);
+    margin-bottom: 24px;
+  }
+  .batch-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px 80px;
+    gap: 16px;
+    align-items: center;
+    padding: 10px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .batch-name { color: var(--dune); font-weight: 500; }
+  .batch-score-range { color: var(--dune); opacity: 0.55; font-size: 12px; }
+  .batch-count { color: var(--dune); text-align: right; opacity: 0.8; }
+  .batch-bar-wrap {
+    height: 20px;
+    background: var(--stone);
+    position: relative;
+    overflow: hidden;
+  }
+  .batch-bar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--fern);
+    width: 0;
+    transition: width 600ms var(--ease);
+    opacity: 0.15;
+  }
+  .batch-row[data-priority="1"] .batch-bar { opacity: 1; }
+  .batch-row[data-priority="2"] .batch-bar { opacity: 0.6; }
+  .batch-row[data-priority="3"] .batch-bar { opacity: 0.35; }
+  .batch-viz.animate .batch-bar { width: var(--w); }
+
+  /* ─── Enrichment substeps ─── */
+  .substeps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--stone);
+    border: 1px solid var(--stone);
+    margin-top: 32px;
+  }
+  @media (max-width: 720px) { .substeps { grid-template-columns: 1fr; } }
+  .substep {
+    background: var(--white);
+    padding: 40px 36px;
+    position: relative;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--dur-elem) var(--ease), transform var(--dur-elem) var(--ease), background-color var(--dur-micro) var(--ease);
+  }
+  .substep.visible { opacity: 1; transform: translateY(0); }
+  .substep:hover { background: var(--bg-subtle); }
+  .substep-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fern);
+    margin-bottom: 16px;
+  }
+  .substep h3 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    color: var(--dune);
+  }
+  .substep p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--dune);
+    opacity: 0.72;
+    margin-bottom: 32px;
+  }
+  .substep .query {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg-subtle);
+    padding: 2px 6px;
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    white-space: nowrap;
+  }
+  .substep-rate {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--stone);
+  }
+  .substep-rate-val {
+    font-family: var(--mono);
+    font-size: 44px;
+    font-weight: 400;
+    color: var(--dune);
+    letter-spacing: -1.5px;
+    line-height: 1;
+  }
+  .substep-rate-val.fern { color: var(--fern); }
+  .substep-rate-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+  }
+
+  /* Browser mockup for enrichment */
+  .browser-mock {
+    margin-top: 32px;
+    border: 1px solid var(--stone);
+    background: var(--white);
+    overflow: hidden;
+  }
+  .browser-chrome {
+    background: var(--bg-subtle);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--stone);
+  }
+  .browser-dots { display: flex; gap: 6px; }
+  .browser-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--stone);
+  }
+  .browser-url {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.7;
+    padding: 4px 12px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    border-radius: 2px;
+  }
+  .browser-body {
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 180px;
+  }
+  .terminal-line {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 350ms var(--ease), transform 350ms var(--ease);
+  }
+  .browser-mock.animate .terminal-line { opacity: 1; transform: translateX(0); }
+  .terminal-line .t-meta { color: var(--fern); }
+  .terminal-line .t-result { color: var(--dune); opacity: 0.85; }
+  .terminal-line .t-dim { color: var(--dune); opacity: 0.5; }
+
+  /* ─── Verification matrix ─── */
+  .verify-matrix {
+    margin-top: 32px;
+    border: 1px solid var(--stone);
+  }
+  .verify-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 24px;
+    padding: 28px 32px;
+    border-bottom: 1px solid var(--stone);
+    align-items: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--dur-elem) var(--ease), transform var(--dur-elem) var(--ease);
+  }
+  .verify-row:last-child { border-bottom: none; }
+  .verify-row.visible { opacity: 1; transform: translateY(0); }
+  .verify-icon {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--fern);
+    text-align: center;
+  }
+  .verify-row strong {
+    font-weight: 500;
+    font-size: 18px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .verify-row .dim {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--dune);
+    opacity: 0.65;
+  }
+  .verify-stat {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--fern);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ─── Donut chart (final stats) ─── */
+  .final-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 32px;
+  }
+  @media (max-width: 820px) {
+    .final-layout { grid-template-columns: 1fr; }
+  }
+  .donut-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .donut-wrap svg { width: 100%; height: 100%; }
+  .donut-center {
+    position: absolute;
+    text-align: center;
+  }
+  .donut-value {
+    font-family: var(--mono);
+    font-size: 64px;
+    font-weight: 400;
+    color: var(--dune);
+    letter-spacing: -2px;
+    line-height: 1;
+    display: inline-block;
+    position: relative;
+  }
+  .donut-value .emphasis-circle {
+    position: absolute;
+    inset: -20px -28px;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .donut-value .emphasis-circle svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .donut-value .emphasis-circle path {
+    fill: none;
+    stroke: var(--fern);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  .visible .donut-value .emphasis-circle path {
+    animation: drawMark 1100ms var(--ease) 700ms forwards;
+  }
+  .donut-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+    margin-top: 12px;
+  }
+  .donut-arc {
+    fill: none;
+    stroke-width: 16;
+    stroke-linecap: butt;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    stroke-dasharray: 0 1000;
+    transition: stroke-dasharray 1.4s var(--ease);
+  }
+
+  .final-table { border-top: 1px solid var(--stone); }
+  .final-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--stone);
+    align-items: baseline;
+  }
+  .final-label {
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 17px;
+  }
+  .final-source {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.55;
+    letter-spacing: 0.5px;
+  }
+  .final-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--fern);
+    min-width: 70px;
+    text-align: right;
+  }
+
+  /* ─── Pull quote ─── */
+  .pull-quote {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: clamp(24px, 3.5vw, 36px);
+    line-height: 1.35;
+    color: var(--dune);
+    letter-spacing: -0.5px;
+    max-width: 780px;
+    margin: 140px auto;
+    padding: 0 0 0 40px;
+    border-left: 2px solid var(--fern);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity var(--dur-page) var(--ease), transform var(--dur-page) var(--ease);
+  }
+  .pull-quote.visible { opacity: 1; transform: translateY(0); }
+  .pull-quote cite {
+    display: block;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fern);
+    font-style: normal;
+  }
+
+  footer {
+    margin-top: 120px;
+    padding-top: 32px;
+    border-top: 1px solid var(--stone);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dune);
+    opacity: 0.5;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Counter */
+  .counter { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="dots"></div>
+<div class="scroll-progress" id="progress"></div>
+
+<div class="topbar">
+  <div style="display: flex; align-items: center; gap: 32px;">
+    <a class="wordmark" href="#top">
+      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+        <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z"
+              stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22"
+              stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+    </a>
+    <nav style="display: flex; gap: 20px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
+      <a href="enrichment_process.html" style="color: var(--fern); text-decoration: none; padding: 6px 0;">Process</a>
+      <a href="enriched_leads.html" style="color: var(--dune); opacity: 0.55; text-decoration: none; padding: 6px 0; transition: opacity 150ms var(--ease);" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">Leads</a>
+    </nav>
+  </div>
+  <div class="topbar-meta">INTERNAL · LEAD ENRICHMENT</div>
+</div>
+
+<div class="container" id="top">
+
+  <!-- ═══ Hero ═══ -->
+  <header class="hero">
+    <div class="eyebrow">Florida STR Outreach · 25–49 Listings Tier</div>
+    <h1>
+      Turning a raw permit database into
+      <span class="emphasis">413 qualified leads<svg class="underline" viewBox="0 0 400 14" preserveAspectRatio="none">
+        <path d="M 4 9 C 70 4, 150 11, 230 7 C 300 4, 360 9, 396 6"
+              pathLength="1"/>
+      </svg></span>
+      — every step measured, nothing guessed.
+    </h1>
+
+    <div class="hero-meta">
+      <div>
+        <span class="label">Source</span>
+        <span class="value">FL STR permit DB</span>
+      </div>
+      <div>
+        <span class="label">Raw Leads</span>
+        <span class="value">505</span>
+      </div>
+      <div>
+        <span class="label">Qualified</span>
+        <span class="value">413</span>
+      </div>
+      <div>
+        <span class="label">Enriched</span>
+        <span class="value">412</span>
+      </div>
+      <div>
+        <span class="label">Batches</span>
+        <span class="value">9</span>
+      </div>
+    </div>
+
+    <!-- Hero funnel animation -->
+    <div class="funnel-viz" id="funnel">
+      <div class="funnel-stages">
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 01</div>
+          <div class="stage-label">Raw</div>
+          <div class="stage-val counter" data-target="505">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 100%"></div></div>
+        </div>
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 02</div>
+          <div class="stage-label">Cleaned</div>
+          <div class="stage-val counter" data-target="413">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 82%"></div></div>
+        </div>
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 03</div>
+          <div class="stage-label">Scored</div>
+          <div class="stage-val counter" data-target="413">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 82%"></div></div>
+        </div>
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 04</div>
+          <div class="stage-label">Enriched</div>
+          <div class="stage-val counter" data-target="412">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 99%"></div></div>
+        </div>
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 05</div>
+          <div class="stage-label">Verified</div>
+          <div class="stage-val counter" data-target="412">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 99%"></div></div>
+        </div>
+        <div class="funnel-stage">
+          <div class="stage-num">STAGE 06</div>
+          <div class="stage-label">Ready</div>
+          <div class="stage-val counter" data-target="65">0</div>
+          <div class="stage-bar"><div class="stage-fill" style="--w: 13%"></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ Step 1: Cleaning ═══ -->
+  <section id="step-1" data-section>
+    <div class="section-head">
+      <span class="section-num">01 / 06</span>
+      <h2>Cleaning</h2>
+      <p class="section-intro">Remove non-target rows. Not every licensee is a Rev Whisper prospect — single-building associations and HOAs need to go before scoring begins.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="rules">
+          <div class="rule" data-animate>
+            <span class="bullet">01</span>
+            <div>
+              <strong>Associations, HOAs, Condos, Timeshares</strong>
+              <div class="dim">Names containing ASSOCIATION, CONDO, HOA, TIMESHARE. Building-level entities, not property management companies.</div>
+            </div>
+            <span class="metric">56 removed</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">02</span>
+            <div>
+              <strong>Single-Building Operators</strong>
+              <div class="dim">Unique Addresses equals one. Manages a single condo tower, not a distributed portfolio.</div>
+            </div>
+            <span class="metric">36 removed</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">03</span>
+            <div>
+              <strong>Generic OWNER Entries</strong>
+              <div class="dim">Licensee name is just "OWNER" with no identifiable company.</div>
+            </div>
+            <span class="metric">0 removed</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">04</span>
+            <div>
+              <strong>Exact Duplicates</strong>
+              <div class="dim">Case-insensitive name match. Prevents double-outreach to the same entity.</div>
+            </div>
+            <span class="metric">0 removed</span>
+          </div>
+        </div>
+
+        <!-- Dot funnel: 505 dots, 92 dimmed (removed), 413 fern (kept) -->
+        <div class="dot-funnel" id="dotfunnel">
+          <div class="dot-funnel-title">505 Raw Licensees · Each dot = one company</div>
+          <div class="dot-grid" id="dotgrid"></div>
+          <div class="dot-legend">
+            <div class="dot-legend-item"><span class="dot-sample raw"></span> Raw (505)</div>
+            <div class="dot-legend-item"><span class="dot-sample removed"></span> Removed (92)</div>
+            <div class="dot-legend-item"><span class="dot-sample kept"></span> Kept (413)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Step 2: Scoring ═══ -->
+  <section id="step-2" data-section>
+    <div class="section-head">
+      <span class="section-num">02 / 06</span>
+      <h2>Scoring</h2>
+      <p class="section-intro">Each qualified lead gets a 0–100 score on six weighted signals. Higher score means stronger prospect profile for Rev Whisper.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="score-example" id="scoreExample">
+          <div class="score-weights">
+            <div class="score-weights-title">Worked Example · Scoring One Lead</div>
+            <div class="score-row">
+              <span class="score-row-label">Distributed Portfolio Ratio</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">40.0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-row-label">Total Unit Count</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">20.0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-row-label">Multi-County Presence</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">12.0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-row-label">Has Phone Number</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">10.0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-row-label">Business Entity (LLC)</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">10.0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-row-label">PM Keywords bonus</span>
+              <div class="score-bar-wrap"><div class="score-bar" style="--w: 100%"></div></div>
+              <span class="score-val">+8.0</span>
+            </div>
+          </div>
+          <div class="score-display">
+            <div class="score-display-title">Result</div>
+            <div class="score-company-name">AXD Properties LLC</div>
+            <div class="score-company-meta">49 UNITS · 4 COUNTIES · LLC</div>
+            <div class="score-total counter" data-target="100">0</div>
+            <div class="score-total-label">Composite Score</div>
+            <div class="score-rank">
+              Placed in <span class="mono">batch_01</span>, rank <span class="mono">#1</span> of 413 qualified leads.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Pull quote ═══ -->
+  <blockquote class="pull-quote" data-animate>
+    Every recommendation is backed by data. The scoring rubric makes that commitment visible in every batch.
+    <cite>— Internal Standard, Outreach Operations</cite>
+  </blockquote>
+
+  <!-- ═══ Step 3: Batching ═══ -->
+  <section id="step-3" data-section>
+    <div class="section-head">
+      <span class="section-num">03 / 06</span>
+      <h2>Batching</h2>
+      <p class="section-intro">Scored leads split into CSVs of fifty, ordered by score descending. Top-priority batches processed first — the highest-scoring leads never wait.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="batch-viz" id="batchViz">
+          <div class="batch-viz-title">413 Leads · 9 Batches · Highest Priority First</div>
+          <div class="batch-row" data-priority="1">
+            <span class="batch-name">batch_01</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">87–100</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="1">
+            <span class="batch-name">batch_02</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">82–87</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="1">
+            <span class="batch-name">batch_03</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">78–82</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="2">
+            <span class="batch-name">batch_04</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">73–78</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="2">
+            <span class="batch-name">batch_05</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">69–73</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="3">
+            <span class="batch-name">batch_06</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">61–68</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="3">
+            <span class="batch-name">batch_07</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">51–61</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="3">
+            <span class="batch-name">batch_08</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 100%"></div></div>
+            <span class="batch-score-range">36–51</span>
+            <span class="batch-count">50 leads</span>
+          </div>
+          <div class="batch-row" data-priority="3">
+            <span class="batch-name">batch_09</span>
+            <div class="batch-bar-wrap"><div class="batch-bar" style="--w: 26%"></div></div>
+            <span class="batch-score-range">17–35</span>
+            <span class="batch-count">13 leads</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Step 4: Enrichment ═══ -->
+  <section id="step-4" data-section>
+    <div class="section-head">
+      <span class="section-num">04 / 06</span>
+      <h2>Enrichment</h2>
+      <p class="section-intro">A Playwright automation drives two browser tabs — Sunbiz and search engines — running four targeted searches per lead. Progress saved after every record.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="substeps">
+          <div class="substep" data-animate>
+            <div class="substep-tag">4a · FL Secretary of State</div>
+            <h3>Sunbiz Officer Lookup</h3>
+            <p>Search <span class="query">search.sunbiz.org</span> for the company. Extract officers from the Authorized Person(s) section. Priority order: CEO, President, Owner, MGR, Manager, Principal, Member.</p>
+            <div class="substep-rate">
+              <span class="substep-rate-val fern">99%</span>
+              <span class="substep-rate-label">hit rate</span>
+            </div>
+          </div>
+          <div class="substep" data-animate>
+            <div class="substep-tag">4b · Google</div>
+            <h3>Company Website</h3>
+            <p>Query: <span class="query">"[Company]" Florida vacation rental</span>. Filter LinkedIn, Facebook, aggregators, government sites. Falls back to DuckDuckGo on CAPTCHA.</p>
+            <div class="substep-rate">
+              <span class="substep-rate-val">75%</span>
+              <span class="substep-rate-label">hit rate</span>
+            </div>
+          </div>
+          <div class="substep" data-animate>
+            <div class="substep-tag">4c · DuckDuckGo</div>
+            <h3>LinkedIn Profile</h3>
+            <p>Query: <span class="query">site:linkedin.com/in/ "[Owner]" Florida</span>. DuckDuckGo used because Google CAPTCHAs the <span class="query">site:linkedin.com</span> pattern aggressively.</p>
+            <div class="substep-rate">
+              <span class="substep-rate-val">74%</span>
+              <span class="substep-rate-label">hit rate</span>
+            </div>
+          </div>
+          <div class="substep" data-animate>
+            <div class="substep-tag">4d · DuckDuckGo</div>
+            <h3>Owner Email</h3>
+            <p>Query: <span class="query">"[Owner]" "[Company]" email</span>. Scan snippets for email regex matches. Filter junk domains.</p>
+            <div class="substep-rate">
+              <span class="substep-rate-val">4%</span>
+              <span class="substep-rate-label">hit rate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal-style live enrichment mockup -->
+        <div class="browser-mock" id="terminal">
+          <div class="browser-chrome">
+            <div class="browser-dots">
+              <span class="browser-dot"></span>
+              <span class="browser-dot"></span>
+              <span class="browser-dot"></span>
+            </div>
+            <div class="browser-url">enrich_batch.py · batch_01 · [14/50]</div>
+          </div>
+          <div class="browser-body">
+            <div class="terminal-line"><span class="t-dim">🔍</span> <span class="t-meta">LOYALTY VACATION HOMES LLC</span></div>
+            <div class="terminal-line"><span class="t-dim">  Step 1</span> · Sunbiz officer lookup...</div>
+            <div class="terminal-line"><span class="t-dim">  ✓</span> Sunbiz officer: <span class="t-result">Liza Haynes</span> <span class="t-dim">(MGR)</span></div>
+            <div class="terminal-line"><span class="t-dim">  Step 2</span> · Google website lookup...</div>
+            <div class="terminal-line"><span class="t-dim">  ✓</span> Website: <span class="t-result">loyaltyvacationhomes.com</span></div>
+            <div class="terminal-line"><span class="t-dim">  Step 3</span> · DDG LinkedIn search for Liza Haynes...</div>
+            <div class="terminal-line"><span class="t-dim">  ✓</span> LinkedIn: <span class="t-result">linkedin.com/in/liza-haynes-233424aa</span></div>
+            <div class="terminal-line"><span class="t-dim">  Step 4</span> · DDG email search...</div>
+            <div class="terminal-line"><span class="t-dim">  ✗</span> <span class="t-dim">No email found</span></div>
+            <div class="terminal-line"><span class="t-dim">  ◐</span> Result: <span class="t-result">3/4 fields</span> <span class="t-dim">— Missing: Owner Email</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Step 5: Verification ═══ -->
+  <section id="step-5" data-section>
+    <div class="section-head">
+      <span class="section-num">05 / 06</span>
+      <h2>Verification</h2>
+      <p class="section-intro">Every LinkedIn URL and website URL gets visited and checked. No data is trusted without confirmation the source exists and matches the expected record.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="verify-matrix">
+          <div class="verify-row" data-animate>
+            <span class="verify-icon">✓</span>
+            <div>
+              <strong>LinkedIn Profile Exists</strong>
+              <div class="dim">Navigate to each URL and confirm the page loads. All 111 profiles returned valid. Zero dead links across three batches.</div>
+            </div>
+            <span class="verify-stat">111 / 111</span>
+          </div>
+          <div class="verify-row" data-animate>
+            <span class="verify-icon">↔</span>
+            <div>
+              <strong>LinkedIn Name Match</strong>
+              <div class="dim">Extract name from URL slug (e.g. <span class="query">/in/alessandra-dale</span> → "Alessandra Dale"). Compare against the Sunbiz owner record via fuzzy name matching.</div>
+            </div>
+            <span class="verify-stat">73 match · 38 mismatch</span>
+          </div>
+          <div class="verify-row" data-animate>
+            <span class="verify-icon">△</span>
+            <div>
+              <strong>Website Junk Detection</strong>
+              <div class="dim">Flag DuckDuckGo ad redirects, government portals, news articles, aggregator sites. Pre-filter known-bad domains before visiting.</div>
+            </div>
+            <span class="verify-stat">42 flagged</span>
+          </div>
+          <div class="verify-row" data-animate>
+            <span class="verify-icon">✓</span>
+            <div>
+              <strong>Website Content Relevance</strong>
+              <div class="dim">Scrape title and first 3000 characters of body text. Check for company name tokens and rental industry keywords before confirming.</div>
+            </div>
+            <span class="verify-stat">59 confirmed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Step 6: Cleanup ═══ -->
+  <section id="step-6" data-section>
+    <div class="section-head">
+      <span class="section-num">06 / 06</span>
+      <h2>Cleanup</h2>
+      <p class="section-intro">Automated pass blanks out bad data. Produces clean CSVs and a flagged-for-review report for manual follow-up on leads that lost data.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="rules">
+          <div class="rule" data-animate>
+            <span class="bullet">01</span>
+            <div>
+              <strong>Blank Mismatched LinkedIn URLs</strong>
+              <div class="dim">Profile belongs to a different person. Remove to prevent wrong-person outreach.</div>
+            </div>
+            <span class="metric">38 blanked</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">02</span>
+            <div>
+              <strong>Blank Junk Website URLs</strong>
+              <div class="dim">DuckDuckGo ad redirects, government sites, news articles. Not actual company websites.</div>
+            </div>
+            <span class="metric">42 blanked</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">03</span>
+            <div>
+              <strong>Blank Dead or Error Websites</strong>
+              <div class="dim">HTTP 403, 429, or connection errors. Site is down or actively blocking automation.</div>
+            </div>
+            <span class="metric">12 blanked</span>
+          </div>
+          <div class="rule" data-animate>
+            <span class="bullet">04</span>
+            <div>
+              <strong>Generate Flagged-for-Review Report</strong>
+              <div class="dim">Leads that lost data during cleanup. Candidates for manual re-search or alternate enrichment tools.</div>
+            </div>
+            <span class="metric">85 flagged</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Final Results ═══ -->
+  <section id="final" data-section>
+    <div class="section-head">
+      <span class="section-num">—</span>
+      <h2>Final Data Quality</h2>
+      <p class="section-intro">Across the first three batches — two hundred leads enriched, verified, and cleaned.</p>
+    </div>
+
+    <div class="section-body">
+      <div>
+        <div class="final-layout">
+          <div class="donut-wrap" id="donutwrap">
+            <svg viewBox="0 0 200 200">
+              <!-- Background track -->
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#E0DCDA" stroke-width="16"/>
+              <!-- Main arc — 99% of circumference = ~497 -->
+              <circle class="donut-arc" id="donutArc" cx="100" cy="100" r="80" stroke="#4A6741" stroke-dasharray="0 502" pathLength="502"/>
+            </svg>
+            <div class="donut-center">
+              <span class="donut-value">
+                <span class="counter" data-target="99" data-suffix="%">0</span>
+                <span class="emphasis-circle">
+                  <svg viewBox="0 0 300 140" preserveAspectRatio="none">
+                    <g transform="rotate(-2 150 70)">
+                      <path d="M 186 14
+                               C 238 18 278 38 282 72
+                               C 282 108 222 128 150 128
+                               C 78 128 18 108 18 72
+                               C 18 38 76 14 150 14
+                               C 176 14 190 16 196 20"
+                            pathLength="1"/>
+                    </g>
+                  </svg>
+                </span>
+              </span>
+              <div class="donut-label">Owner Name · Sunbiz</div>
+            </div>
+          </div>
+
+          <div class="final-table">
+            <div class="final-row">
+              <div>
+                <div class="final-label">Owner Name</div>
+                <div class="final-source">SUNBIZ · FL SEC. OF STATE</div>
+              </div>
+              <span class="final-value">99%</span>
+            </div>
+            <div class="final-row">
+              <div>
+                <div class="final-label">LinkedIn Profile</div>
+                <div class="final-source">DDG · SLUG-VERIFIED</div>
+              </div>
+              <span class="final-value">48%</span>
+            </div>
+            <div class="final-row">
+              <div>
+                <div class="final-label">Company Website</div>
+                <div class="final-source">GOOGLE / DDG · CONTENT-CHECKED</div>
+              </div>
+              <span class="final-value">39%</span>
+            </div>
+            <div class="final-row">
+              <div>
+                <div class="final-label">Owner Email</div>
+                <div class="final-source">DDG · PUBLIC SOURCES</div>
+              </div>
+              <span class="final-value">4%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Rev Whisper · Florida STR Outreach</span>
+    <span>25–49 Listings · Batches 1–9</span>
+  </footer>
+
+</div>
+
+<script>
+  // ─── Scroll progress indicator ───
+  const progress = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    progress.style.width = pct + '%';
+  }, { passive: true });
+
+  // ─── Counter animation ───
+  function animateCounter(el) {
+    if (el.dataset.animated) return;
+    el.dataset.animated = '1';
+    const target = parseInt(el.dataset.target, 10);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1200;
+    const start = performance.now();
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      // ease-out
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const val = Math.round(target * eased);
+      el.textContent = val + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+      else el.textContent = target + suffix;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ─── Build the dot funnel (505 dots) ───
+  const dotGrid = document.getElementById('dotgrid');
+  if (dotGrid) {
+    const TOTAL = 505;
+    const REMOVED_IDX = new Set();
+    // Deterministic-ish distribution of removed dots (92 total)
+    const removePositions = [2, 7, 14, 19, 23, 28, 36, 41, 49, 55, 62, 68, 74, 81, 87, 94, 102, 109, 115, 121, 128, 135, 141, 148, 154, 161, 167, 173, 179, 185, 192, 198, 204, 212, 219, 226, 233, 240, 247, 254, 261, 268, 275, 282, 289, 296, 303, 310, 317, 324, 331, 338, 345, 352, 359, 366, 373, 380, 387, 394, 401, 408, 415, 422, 429, 436, 443, 450, 457, 464, 471, 478, 485, 492, 499, 5, 13, 27, 44, 63, 89, 112, 150, 180, 220, 260, 300, 340, 380, 420, 460, 500];
+    removePositions.slice(0, 92).forEach(i => REMOVED_IDX.add(i));
+
+    for (let i = 0; i < TOTAL; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot-pixel';
+      d.dataset.idx = i;
+      dotGrid.appendChild(d);
+    }
+
+    function animateDotFunnel() {
+      const dots = dotGrid.querySelectorAll('.dot-pixel');
+      // Phase 1: fade all in
+      dots.forEach((d, i) => {
+        setTimeout(() => d.classList.add('in'), i * 3);
+      });
+      // Phase 2: mark removed and kept
+      setTimeout(() => {
+        dots.forEach((d, i) => {
+          if (REMOVED_IDX.has(i)) {
+            setTimeout(() => d.classList.add('removed'), Math.random() * 400);
+          } else {
+            setTimeout(() => d.classList.add('kept'), 400 + Math.random() * 600);
+          }
+        });
+      }, TOTAL * 3 + 200);
+    }
+
+    const dotObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateDotFunnel();
+          dotObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    dotObserver.observe(document.getElementById('dotfunnel'));
+  }
+
+  // ─── Section reveal + staggered children ───
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        const children = entry.target.querySelectorAll('[data-animate]');
+        children.forEach((child, i) => {
+          setTimeout(() => child.classList.add('visible'), 70 * i);
+        });
+        // Counter animations
+        entry.target.querySelectorAll('.counter').forEach(c => animateCounter(c));
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('[data-section]').forEach(el => sectionObserver.observe(el));
+
+  // Standalone elements
+  const soloObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        entry.target.querySelectorAll('.counter').forEach(c => animateCounter(c));
+      }
+    });
+  }, { threshold: 0.25 });
+
+  document.querySelectorAll('[data-animate]:not([data-section] [data-animate])').forEach(el => soloObserver.observe(el));
+
+  // Trigger hero counters immediately
+  document.querySelectorAll('.hero .counter').forEach(c => {
+    setTimeout(() => animateCounter(c), 500);
+  });
+
+  // Score example animation
+  const scoreObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate');
+        scoreObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  const scoreEl = document.getElementById('scoreExample');
+  if (scoreEl) scoreObserver.observe(scoreEl);
+
+  // Batch viz animation
+  const batchObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate');
+        batchObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.2 });
+  const batchEl = document.getElementById('batchViz');
+  if (batchEl) batchObserver.observe(batchEl);
+
+  // Funnel viz animation
+  const funnelObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate');
+        funnelObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.2 });
+  const funnelEl = document.getElementById('funnel');
+  if (funnelEl) funnelObserver.observe(funnelEl);
+
+  // Terminal animation — stagger each line
+  const termObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const lines = entry.target.querySelectorAll('.terminal-line');
+        entry.target.classList.add('animate');
+        lines.forEach((line, i) => {
+          line.style.transitionDelay = (i * 180) + 'ms';
+        });
+        termObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  const termEl = document.getElementById('terminal');
+  if (termEl) termObserver.observe(termEl);
+
+  // Donut animation
+  const donutObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const arc = document.getElementById('donutArc');
+        // 99% of 502 (pathLength)
+        arc.setAttribute('stroke-dasharray', '497 502');
+        donutObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  const donutEl = document.getElementById('donutwrap');
+  if (donutEl) donutObserver.observe(donutEl);
+</script>
+
+</body>
+</html>

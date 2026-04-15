@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rev Whisper — Enriched Leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dune: #32302F;
+    --fern: #4A6741;
+    --white: #FFFFFF;
+    --stone: #E0DCDA;
+    --bg-subtle: #F8F7F6;
+    --dot-color: rgba(50, 48, 47, 0.05);
+    --heading: 'Lora', 'Georgia', serif;
+    --body: 'DM Sans', 'system-ui', sans-serif;
+    --mono: 'DM Mono', 'SF Mono', 'Fira Code', monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--white);
+    color: var(--dune);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  .dots {
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Top bar ─── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--stone);
+    z-index: 50;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 32px; }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--heading);
+    font-size: 17px;
+    text-decoration: none;
+  }
+  .wordmark .rev { color: var(--fern); }
+  .wordmark .whisper { color: var(--dune); }
+  .topbar-nav {
+    display: flex;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .topbar-nav a {
+    color: var(--dune);
+    opacity: 0.55;
+    text-decoration: none;
+    padding: 6px 0;
+    transition: opacity 150ms var(--ease);
+  }
+  .topbar-nav a:hover { opacity: 1; }
+  .topbar-nav a.active { opacity: 1; color: var(--fern); }
+  .topbar-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dune);
+    opacity: 0.55;
+    letter-spacing: 1px;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* ─── Header ─── */
+  .page-head { margin-bottom: 40px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fern);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: var(--heading);
+    font-weight: 400;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--dune);
+    margin-bottom: 16px;
+  }
+  .lead {
+    font-size: 18px;
+    color: var(--dune);
+    opacity: 0.7;
+    max-width: 640px;
+  }
+
+  /* ─── Stats bar ─── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--stone);
+    border: 1px solid var(--stone);
+    margin-bottom: 32px;
+  }
+  @media (max-width: 720px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-cell {
+    background: var(--white);
+    padding: 20px 24px;
+  }
+  .stat-cell .v {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--dune);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-cell .v.fern { color: var(--fern); }
+  .stat-cell .l {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+  }
+
+  /* ─── Filter bar ─── */
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 12px;
+    padding: 20px 24px;
+    border: 1px solid var(--stone);
+    background: var(--bg-subtle);
+    margin-bottom: 16px;
+  }
+  @media (max-width: 900px) {
+    .filter-bar { grid-template-columns: 1fr 1fr; }
+    .filter-bar > :first-child { grid-column: 1 / -1; }
+  }
+  .filter-bar label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.55;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .filter-bar input, .filter-bar select {
+    width: 100%;
+    font-family: var(--body);
+    font-size: 14px;
+    padding: 8px 12px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    outline: none;
+    transition: border-color 150ms var(--ease);
+  }
+  .filter-bar input:focus, .filter-bar select:focus {
+    border-color: var(--fern);
+  }
+  .filter-bar button {
+    align-self: end;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    cursor: pointer;
+    transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
+    height: fit-content;
+    margin-top: auto;
+  }
+  .filter-bar button:hover {
+    background: var(--dune);
+    color: var(--white);
+    border-color: var(--dune);
+  }
+  .result-count {
+    padding: 12px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.65;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .result-count .hi { color: var(--fern); font-weight: 500; opacity: 1; }
+  .result-count-text { opacity: 1; }
+  .export-buttons {
+    display: flex;
+    gap: 8px;
+    opacity: 1;
+  }
+  .export-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    background: var(--white);
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    cursor: pointer;
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .export-btn:hover {
+    background: var(--dune);
+    color: var(--white);
+    border-color: var(--dune);
+  }
+  .export-btn.primary {
+    border-color: var(--fern);
+    color: var(--fern);
+  }
+  .export-btn.primary:hover {
+    background: var(--fern);
+    color: var(--white);
+    border-color: var(--fern);
+  }
+  .export-btn svg { width: 12px; height: 12px; }
+  .export-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .export-btn:disabled:hover {
+    background: var(--white);
+    color: var(--dune);
+    border-color: var(--stone);
+  }
+
+  /* ─── Table ─── */
+  .table-wrap {
+    border: 1px solid var(--stone);
+    overflow-x: auto;
+    background: var(--white);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1100px;
+  }
+  thead {
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--stone);
+  }
+  th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dune);
+    opacity: 0.65;
+    padding: 14px 16px;
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    transition: opacity 150ms var(--ease);
+  }
+  th:hover { opacity: 1; }
+  th.sorted { opacity: 1; color: var(--fern); }
+  th.sorted::after {
+    content: attr(data-arrow);
+    margin-left: 6px;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--stone);
+    transition: background-color 150ms var(--ease);
+  }
+  tbody tr:hover { background: var(--bg-subtle); }
+  tbody tr:last-child { border-bottom: none; }
+  td {
+    padding: 16px;
+    vertical-align: top;
+    font-size: 14px;
+  }
+
+  .c-rank {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: 0.5;
+    width: 60px;
+  }
+  .c-batch {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--stone);
+    color: var(--dune);
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .c-batch.p1 { border-color: var(--fern); color: var(--fern); }
+  .c-score {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--fern);
+    width: 80px;
+  }
+  .c-name {
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--dune);
+    line-height: 1.3;
+    max-width: 260px;
+  }
+  .c-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dune);
+    opacity: 0.55;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+  .c-owner {
+    font-family: var(--body);
+    font-size: 14px;
+    color: var(--dune);
+    white-space: nowrap;
+  }
+  .c-owner.empty { opacity: 0.3; font-style: italic; }
+  .c-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fern);
+    text-decoration: none;
+    max-width: 200px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    transition: color 150ms var(--ease);
+  }
+  .c-link:hover { color: var(--dune); text-decoration: underline; }
+  .c-link.empty { color: var(--dune); opacity: 0.3; font-style: italic; }
+  .c-counties {
+    font-size: 13px;
+    color: var(--dune);
+    opacity: 0.7;
+    line-height: 1.4;
+    max-width: 180px;
+  }
+
+  .no-results {
+    padding: 60px 24px;
+    text-align: center;
+    font-family: var(--heading);
+    font-size: 20px;
+    color: var(--dune);
+    opacity: 0.5;
+  }
+
+  /* ─── Footer ─── */
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--stone);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dune);
+    opacity: 0.5;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Row entrance animation ─── */
+  tbody tr {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: fadeIn 250ms var(--ease) forwards;
+  }
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="dots"></div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="wordmark" href="enrichment_process.html">
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
+        <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z"
+              stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22"
+              stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+    </a>
+    <nav class="topbar-nav">
+      <a href="enrichment_process.html">Process</a>
+      <a href="enriched_leads.html" class="active">Leads</a>
+    </nav>
+  </div>
+  <div class="topbar-meta">INTERNAL · 25–49 TIER · BATCHES 1–9</div>
+</div>
+
+<div class="container">
+
+  <div class="page-head">
+    <div class="eyebrow">Enriched Lead Roster</div>
+    <h1>412 Florida Property Managers</h1>
+    <p class="lead">Cleaned, scored, enriched, and verified. Search by company or owner. Filter by batch, score range, or enrichment completeness.</p>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-cell"><div class="v" id="s-total">412</div><div class="l">Total Leads</div></div>
+    <div class="stat-cell"><div class="v fern" id="s-name">388</div><div class="l">Owner Name</div></div>
+    <div class="stat-cell"><div class="v fern" id="s-li">217</div><div class="l">LinkedIn Verified</div></div>
+    <div class="stat-cell"><div class="v fern" id="s-web">133</div><div class="l">Website Verified</div></div>
+    <div class="stat-cell"><div class="v fern" id="s-email">7</div><div class="l">Public Email</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div>
+      <label>Search</label>
+      <input type="text" id="f-search" placeholder="Company name or owner..." autocomplete="off">
+    </div>
+    <div>
+      <label>Batch</label>
+      <select id="f-batch">
+        <option value="">All batches</option>
+        <option value="1">Batch 01 (87–100)</option>
+        <option value="2">Batch 02 (82–87)</option>
+        <option value="3">Batch 03 (78–82)</option>
+        <option value="4">Batch 04 (73–78)</option>
+        <option value="5">Batch 05 (69–73)</option>
+        <option value="6">Batch 06 (61–68)</option>
+        <option value="7">Batch 07 (51–61)</option>
+        <option value="8">Batch 08 (36–51)</option>
+        <option value="9">Batch 09 (28–35)</option>
+      </select>
+    </div>
+    <div>
+      <label>County</label>
+      <select id="f-county">
+        <option value="">All counties</option>
+      </select>
+    </div>
+    <div>
+      <label>Has Data</label>
+      <select id="f-has">
+        <option value="">Any</option>
+        <option value="linkedin">LinkedIn verified</option>
+        <option value="website">Website verified</option>
+        <option value="email">Email found</option>
+        <option value="complete">All four fields</option>
+      </select>
+    </div>
+    <button id="f-reset">Reset</button>
+  </div>
+
+  <div class="result-count" id="count">
+    <span class="result-count-text">Showing <span class="hi">412</span> of <span class="hi">412</span> leads</span>
+    <div class="export-buttons">
+      <button class="export-btn" id="exportFull" title="Export all filtered leads as CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <button class="export-btn primary" id="exportDripify" title="Export LinkedIn leads in Dripify-ready format">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        Export for Dripify
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="score" class="sorted" data-arrow="↓">Score</th>
+          <th data-sort="batch">Batch</th>
+          <th data-sort="name">Company</th>
+          <th data-sort="units">Units</th>
+          <th data-sort="counties">Counties</th>
+          <th data-sort="owner">Owner</th>
+          <th data-sort="linkedin">LinkedIn</th>
+          <th data-sort="website">Website</th>
+          <th data-sort="email">Email</th>
+          <th data-sort="phone">Phone</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span>Rev Whisper · Florida STR Outreach</span>
+    <span>Source: master_clean_all_batches.csv</span>
+  </footer>
+
+</div>
+
+<script>
+const LEADS = [{"rank":"539","name":"AXD PROPERTIES LLC","units":"49","addrs":"49","counties":"Lake, Orange, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE, ORLANDO","phone":"4077296936","score":100.0,"owner":"Alessandra Dale","email":"alessandradale@gmail.com.","linkedin":"https://www.linkedin.com/in/alessandra-dale-23295bb6","website":"","notes":"Missing: Website","batch":1},{"rank":"548","name":"NEXT STAY VACATION RENTALS LLC","units":"48","addrs":"48","counties":"Orange, Osceola, Polk","cities":"CHAMPIONS GATE, DAVENPORT, KISSIMMEE, ORLANDO","phone":"(407)705-7634","score":99.6,"owner":"Carl Johnson","email":"","linkedin":"https://www.linkedin.com/in/carl-johnson-b1345148","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"574","name":"VACATION LOCATIONS REALTY AND RENTALS LLC","units":"47","addrs":"47","counties":"Duval, Osceola, St. Johns","cities":"ATLANTIC BEACH, JACKSONVILLE, JACKSONVILLE BEACH, JACKSONVILLE BEACH , KISSIMMEE, PONTE VEDRA BCH, PONTE VEDRA BEACH, PONTE VEDRA BEACH , PONTE VEDRA BLVD, ST AUGUSTINE","phone":"904-514-1747","score":99.2,"owner":"Michael Strong","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"582","name":"HOME VACATION CORP","units":"46","addrs":"46","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE, REUNION","phone":"5713635228","score":98.8,"owner":"Sebastian Rodriguez Duran","email":"","linkedin":"https://www.linkedin.com/in/sebastian-duran-jimenez-88905b122","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"590","name":"TITAN VACATION HOMES LLC","units":"45","addrs":"45","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, HAINES CITY, KISSIMMEE","phone":"407-344-2007","score":98.3,"owner":"James H Baillie","email":"events@dfi.org","linkedin":"https://www.linkedin.com/in/charles-baillie-44589116","website":"","notes":"Missing: Website","batch":1},{"rank":"600","name":"ISOKAITIS REALTY SERVICES LLC","units":"44","addrs":"44","counties":"Manatee, Orange, Osceola, Polk","cities":"DAVENPORT, HOLMES BEACH, KISSIMMEE, KISSIMMME, ORLANDO, REUNION","phone":"4075770962","score":97.9,"owner":"Danielle Siqueira Bueno","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"613","name":"BLUEANGELES PROPERTIES LLC","units":"43","addrs":"43","counties":"Dade, Osceola, Polk","cities":"DAVENPORT, MIAMI","phone":"7869065535","score":97.5,"owner":"Harold Hernandez G","email":"","linkedin":"https://www.linkedin.com/in/harold-rodriguez-3160a894","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"632","name":"OFFICIAL VACATION HOMES LLC","units":"42","addrs":"42","counties":"Lake, Osceola, Polk, Volusia","cities":"CLERMONT, DAVENPORT, DAVENPORT , HAINES CITY, HAINES CITY , KISSIMMEE, NEW SMYRNA BEACH","phone":"407-797-4920","score":97.1,"owner":"Nicholaus Rohrbach","email":"","linkedin":"https://www.linkedin.com/in/nicholaus-rohrbach-36725215","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"643","name":"WELFARE VACATION HOMES LLC","units":"41","addrs":"41","counties":"Lake, Orange, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE, ORLANDO","phone":"4077498919","score":96.7,"owner":"Vitor Deobber","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"644","name":"LANDMARK U.S. REALTY INC.","units":"41","addrs":"41","counties":"Lake, Osceola, Polk","cities":"CLERMONT , DAVENPORT, KISSIMMEE","phone":"3218886136","score":96.7,"owner":"Baoxian Ma","email":"info@landmark-canada.com","linkedin":"","website":"","notes":"Missing: LinkedIn, Website","batch":1},{"rank":"659","name":"GREATER SOUTHWEST FLORIDA PROPERTIES, INC","units":"41","addrs":"41","counties":"Charlotte, Lee, Manatee, Sarasota","cities":"BRADENTON, FORT MYERS, LONGBOAT KEY, NOKOMIS, OSPREY, PORT CHARLOTTE, SARASOTA, SIESTA KEY, VENICE","phone":"203-249-9389","score":96.7,"owner":"Steven H Loparco","email":"contact@nathandoughertylaw.com.","linkedin":"https://www.linkedin.com/in/steve-loparco-a2360812","website":"","notes":"Missing: Website","batch":1},{"rank":"701","name":"MEGA VACATION HOMES LLC","units":"38","addrs":"38","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE","phone":"4078004385","score":95.4,"owner":"Natalia De Macedo","email":"","linkedin":"https://www.linkedin.com/in/natalia-miquelino","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"577","name":"TMI REAL ESTATE COMPANY AND RENTALS INC","units":"47","addrs":"47","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, PLACIDA, PORT CHARLOTTE, ROTONDA, ROTONDA WEST, VENICE","phone":"941-460-0410","score":95.2,"owner":"Lesley E Hare","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"581","name":"LOYALTY VACATION HOMES LLC","units":"46","addrs":"46","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE, REUNION","phone":"863-521-8761","score":94.8,"owner":"Liza Haynes","email":"","linkedin":"https://www.linkedin.com/in/liza-haynes-233424aa","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"746","name":"VAL GAL REAL ESTATE INVESTMENTS INC","units":"36","addrs":"36","counties":"Broward, Dade, Highlands","cities":"DANIA BEACH, DEERFIELD BEACH, FORT LAUDERDALE, FT. LAUDERDALE, HOLLYWOOD, HOLLYWOOD BEACH, LAKE PLACID, LIGHTHOUSE POINT, NORTH MIAMI BEACH, POMPANO BEACH","phone":"954.744.4210","score":94.6,"owner":"Affordable Accounting & Tax Services, Llc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"726","name":"PLUS VACATION RENTAL LLC","units":"37","addrs":"36","counties":"Citrus, Collier, Pinellas","cities":"CRYSTAL RIVERS, INVERNESS, IVERNESS, MARCO ISLAND, NAPLES, ST PETERSBURG","phone":"3125210850","score":93.9,"owner":"Mark Dennis","email":"","linkedin":"https://www.linkedin.com/in/mark-dennis-55093b311","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"545","name":"PARADISE BREEZE VACATION RENTALS AND REALTY LLC","units":"49","addrs":"46","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, PLACIDA, PORT CHARLOTTE, ROTONDA WEST, ROTUNDA WEST, VENICE","phone":"941-223-2656","score":93.6,"owner":"Shannon Doell","email":"","linkedin":"https://www.linkedin.com/in/shannon-doell-b5a70536","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"542","name":"VCJ PROPERTY MANAGEMENT LLC","units":"49","addrs":"45","counties":"Flagler, Volusia","cities":"BEVERLY BEACH, FLAGLER BEACH, ORMOND BEACH, PALM COAST","phone":"904-576-6264","score":92.7,"owner":"Jason O Fromm","email":"","linkedin":"https://www.linkedin.com/in/jason-fromm-83984b3a7","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"621","name":"HOLIDAY BEACH RENTALS, INC.","units":"43","addrs":"42","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, PANAMA CITY BEACH ","phone":"850-249-3684","score":92.6,"owner":"Enrique M Penate","email":"","linkedin":"","website":"https://bisprofiles.com/fl/holiday-beach-rentals-p13000102280","notes":"Missing: LinkedIn, Email","batch":1},{"rank":"851","name":"ENCANTADA MANAGEMENT LLC","units":"31","addrs":"31","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE","phone":"407-7705791","score":92.5,"owner":"Cumberland, Daryl, Mr","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"677","name":"DIAMOND GULF RENTALS LLC","units":"40","addrs":"40","counties":"Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"850.270.5232","score":92.2,"owner":"Mark Paschal","email":"","linkedin":"https://www.linkedin.com/in/mark-paschal-175a6915","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"879","name":"CENTRAL FL GULF COAST PROPERTY MANAGEMENT INC","units":"30","addrs":"30","counties":"Hernando, Pasco, Pinellas","cities":"BROOKSVILLE, DUNEDIN, HERNANDO BEACH , HOLIDAY , HUDSON, NEW PORT RICHEY, PALM HARBOR, PORT RICHEY, SPRING HILL, TARPON SPRINGS, WEEKI WACHEE","phone":"314-420-9955","score":92.1,"owner":"Timothy A Price","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"880","name":"DM REALTY USA LLC","units":"30","addrs":"30","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, KISSIMMEE, ORLANDO","phone":"407-452-7262","score":92.1,"owner":"Roberto Dias","email":"","linkedin":"https://www.linkedin.com/in/roberto-dias-26342a34","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"907","name":"ONE VACATION HOME INC","units":"29","addrs":"29","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE, KISSIMMEE , ORLANDO, SEVERAL","phone":"(844) 345-1549","score":91.7,"owner":"Edney Pintor Ferreira De Souza","email":"","linkedin":"","website":"https://www.vrinsider.com/united-states/orlando/property-management/one-vacation-home-inc","notes":"Missing: LinkedIn, Email","batch":1},{"rank":"569","name":"STR MANAGEMENT SOLUTIONS LLC","units":"47","addrs":"38","counties":"Hillsborough, Lee, Manatee, Pinellas","cities":"ANNA MARIA, CLEARWATER, DUNEDIN, FORT MYERS, INDIAN SHORES, LARGO, PALM HARBOR, SEMINOLE, TAMPA, TAMPA , TREASURE ISLAND, TREASURE ISLAND ","phone":"813-563-0877","score":91.5,"owner":"Aj Steffens Company Llc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"573","name":"SOLEIL VACATIONS LLC","units":"47","addrs":"47","counties":"Bay, Brevard, Walton","cities":"MELBOURNE, MIRAMAR BEACH, PANAMA CITY, PANAMA CITY BEACH, SANTA ROSA BEACH","phone":"8502764697","score":91.2,"owner":"Po Box 36808","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"678","name":"FRANGISTA BEACH REALTY INC","units":"40","addrs":"39","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"850-654-5501","score":91.2,"owner":"Wilson, Clare T, Dvm","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"938","name":"EASE PROPERTY MANAGEMENT LLC","units":"28","addrs":"28","counties":"Monroe, Osceola, Polk, Seminole, Volusia","cities":"DAVENPORT, DAYTONA BEACH, HAINES CITY, ISLAMORADA, KISSIMMEE, LAKE MARY, SAINT CLOUD","phone":"407-271-8262","score":91.2,"owner":"Qiufang Yao","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"546","name":"JRW VACATION RENTALS, LLC","units":"49","addrs":"49","counties":"Lee","cities":"BOKEELIA, MATLACHA, ST. JAMES CITY, ST. JAMES CITY ","phone":"239-659-6105","score":91.0,"owner":"Inc. John R. Wood","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"732","name":"CONSTELLATION PROPERTY MANAGEMENT LLC","units":"37","addrs":"37","counties":"Osceola, Polk","cities":"CHAMPIONSGATE, DAVENPORT, KISSIMMEE","phone":"6892877499","score":91.0,"owner":"Mykyta Sukhorukov","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"965","name":"MORADDA VACATION HOMES LLC","units":"27","addrs":"27","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, KISSIKKEE, KISSIMMEE, KISSIMMEE , ORLANDO","phone":"4077296936","score":90.8,"owner":"Rafael Coutinho","email":"","linkedin":"https://www.linkedin.com/in/-rafael-coutinho","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"755","name":"BEST PRICE VACATION HOMES LLC","units":"36","addrs":"36","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE","phone":"4078007028","score":90.6,"owner":"Roberto Gouvea Costa Junior","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"572","name":"VACATION RENT ORLANDO LLC","units":"47","addrs":"47","counties":"Osceola","cities":"KISSIMME, KISSIMMEE, REUNION","phone":"2037220332","score":90.2,"owner":"Yenny Dinozzi","email":"","linkedin":"https://www.linkedin.com/in/yenny-ordono-932b60b2","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"638","name":"RUSSELL AND RUSSELL VACATION RENTALS LLC","units":"42","addrs":"39","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH, SEACREST","phone":"8883180022","score":90.2,"owner":"Llc Bluepoint Financial","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"647","name":"EUPHORIA VACATION HOMES LLC","units":"41","addrs":"38","counties":"Putnam, St. Johns","cities":"GREEN COVE SPRINGS, PALATKA, SAINT AUGUSTINE, ST AUGUSTINE, ST. AUGUSTINE","phone":"9045013755","score":89.7,"owner":"Danielle Fattizzi","email":"","linkedin":"https://www.linkedin.com/in/danielle-fattizzi-2059b6124","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"617","name":"MGW HOLDINGS LLC","units":"43","addrs":"43","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE","phone":"8634246896","score":89.5,"owner":"Matthew Williams","email":"","linkedin":"https://www.linkedin.com/in/matthew-williams-4a31bb1a6","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"619","name":"SWEET INVESTMENT FL, LLC","units":"43","addrs":"43","counties":"Lake, Osceola, Polk","cities":"CHAMPIONS GATE, CLEARMONT, DAVENPORT, KISSIMEE, KISSIMMEE, KISSIMMEE , KISSIMMEE FL","phone":"3219874171","score":89.5,"owner":"Dulce Cardenas","email":"","linkedin":"https://www.linkedin.com/in/dulce-cardenas-870210297","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"568","name":"BELLOISE REAL ESTATE INC","units":"47","addrs":"46","counties":"Pinellas","cities":"CLEARWATER BEACH, DUNEDIN, INDIAN ROCKS BEACH","phone":"7277091272","score":89.3,"owner":"Belloise, Salvatore, Iii","email":"","linkedin":"","website":"https://licensee.io/real-estate/1016482-belloise-real-estate-inc-fl/","notes":"Missing: LinkedIn, Email","batch":1},{"rank":"813","name":"EMERALD BEACH RENTALS LLC","units":"33","addrs":"33","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, PANAMA CITY BEACH , ROSEMARY, SANTA ROSA BEACH","phone":"8507084466","score":89.3,"owner":"Roger D Rietsema","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"634","name":"PROPER GROUP LLC","units":"42","addrs":"42","counties":"Flagler, St. Johns, Volusia","cities":"FLAGLER BEACH, ORMOND BEACH, PALM COAST, PONTE VEDRA BEACH, SAINT AUGUSTINE, ST AUGUSTINE, ST. AUGUSTINE, ST. AUGUSTINE BEACH, ST. AUGUSTINE,","phone":"6786130662","score":89.1,"owner":"Justin Chen","email":"Directory@UAlberta.ca","linkedin":"https://www.linkedin.com/in/justin-chen-788a5813","website":"","notes":"Missing: Website","batch":1},{"rank":"828","name":"ORLANDO REGIONAL PROPERTY MANAGEMENT INC","units":"32","addrs":"32","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"407-800-4545","score":88.9,"owner":"Carmen J Lopez","email":"","linkedin":"https://www.linkedin.com/in/carmen-lopez-06a569393","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"833","name":"PAMPERED PALM PROPERTIES LLC","units":"32","addrs":"32","counties":"Bay, Walton","cities":"INLET BEACH, MIRAMAR BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANDESTIN, SANTA ROSA BEACH, SEACREST, SEACREST BEACH","phone":"4056795042","score":88.9,"owner":"Joseph K Stewart","email":"","linkedin":"","website":"https://www.alignable.com/rosemary-beach-fl/pampered-palm-properties-llc","notes":"Missing: LinkedIn, Email","batch":1},{"rank":"861","name":"ALL 30A PROPERTIES, LLC","units":"31","addrs":"31","counties":"Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"(850)699-9332","score":88.5,"owner":"Michael B Savage","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"863","name":"DMB PROPERTY MANAGEMENT INC","units":"31","addrs":"31","counties":"Leon, Wakulla","cities":"PANACEA, TALLAHASSEE","phone":"8504914753","score":88.5,"owner":"Michael R Rechter","email":"","linkedin":"https://www.linkedin.com/in/michael-rechter-93b0455","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"625","name":"718 MANAGEMENT GROUP LLC","units":"42","addrs":"42","counties":"Broward","cities":"DANIA, DANIA BEACH, HOLLYWOOD","phone":"646-441-0851","score":88.1,"owner":"Dmitriy Kelmenson","email":"","linkedin":"https://www.linkedin.com/in/dmitriy-kelmenson-85498249","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"626","name":"INTTELI GROUP LLC","units":"42","addrs":"41","counties":"Lake, Orange, Osceola, Polk","cities":"DAVENPORT, KISSIMMEE, ORLANDO","phone":"407-588-0808","score":88.1,"owner":"Marcio L Silva","email":"","linkedin":"https://www.linkedin.com/in/marcio-silva-845a3931b","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"538","name":"TOTAL SYNERGY SOLUTIONS LLC","units":"49","addrs":"49","counties":"Osceola, Polk","cities":"CHAMPIONS GATE, DAVENPORT, KISSIMEE, KISSIMMEE, REUNION","phone":"4077647804","score":88.0,"owner":"Jose Paulo Lucic","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"609","name":"GULF SUN VACATION RENTALS LLC","units":"44","addrs":"43","counties":"Gulf","cities":"PORT SAINT JOE, PORT ST JOE","phone":"850-677-1332","score":88.0,"owner":"Brian Reilly","email":"","linkedin":"https://www.linkedin.com/in/brian-reilly32771","website":"","notes":"Missing: Website, Email","batch":1},{"rank":"656","name":"SUNCOAST VACATION RENTALS OF ST. GEORGE ISLAND, LLC","units":"41","addrs":"41","counties":"Franklin","cities":"EASTPOINT, ST GEORGE ISLAND, ST. GEORGE ISLAND","phone":"850-927-2282","score":87.7,"owner":"Samuel D Gilbert","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"679","name":"VAY CAY RENTALS LLC","units":"40","addrs":"35","counties":"Escambia, Santa Rosa","cities":"GULF BREEZE, PENSACOLA, PENSACOLA BEACH","phone":"850-741-4715","score":87.2,"owner":"Christopher A Adams","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":1},{"rank":"684","name":"LITTLE GASPARILLA VACATION RENTALS LLC","units":"40","addrs":"40","counties":"Charlotte","cities":"PLACIDA, PLACIDA ","phone":"941-662-7163","score":87.2,"owner":"Eileen Handberg","email":"","linkedin":"https://www.linkedin.com/in/eileen-handberg-0b094411","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"708","name":"SAIL VACATION RENTALS, LLC","units":"38","addrs":"34","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"8504603181","score":87.2,"owner":"Po Box 1651","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"946","name":"VILLA GROVE PROPERTIES LLC","units":"28","addrs":"28","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"8506014922","score":87.2,"owner":"Andru C Zeiset","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"725","name":"MLAC PROPERTY SERVICES INC","units":"37","addrs":"37","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE","phone":"844-707-3767","score":87.0,"owner":"Michael D Copeland","email":"","linkedin":"https://www.linkedin.com/in/michael-d-copeland-ii-84459724","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"738","name":"LIVE THE GULF COAST.COM INC","units":"37","addrs":"37","counties":"Bay, Okaloosa, Santa Rosa, Walton","cities":"DESTIN, GULF BREEZE, LYNN HAVEN, PANAMA CITY, PANAMA CITY BEACH, SANTA ROSA BEACH, SEAGROVE BEACH, WESTVILLE","phone":"850.914.2277","score":87.0,"owner":"","email":"","linkedin":"","website":"https://www.livethegulfcoast.com/terms-and-conditions/?srsltid=AfmBOoqPUOJy3LcR3mZssoLd1GHB_LgUKFyPC8nZlN_VYY3-9P9bgjG6","notes":"Missing: Owner Name, LinkedIn, Email","batch":2},{"rank":"692","name":"LOCALVR LLC","units":"39","addrs":"38","counties":"Bay, Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH, SEAGROVE","phone":"7208288077","score":86.8,"owner":"Robert Half","email":"","linkedin":"https://www.linkedin.com/in/robert-berg-78766329","website":"https://stay.golocalvr.com/","notes":"Missing: Email","batch":2},{"rank":"727","name":"PERSONAL TOUCH MANAGEMENT COMPANY LLC","units":"37","addrs":"33","counties":"Osceola, Polk","cities":"DAVENPORT, HAINES CITY, KISSIMMEE","phone":"3524591779","score":86.7,"owner":"Jeroen Bant","email":"","linkedin":"","website":"https://www.funstayflorida.com/blog/floridas-short-term-rental-laws-in-2025/#:~:text=Short%2Dterm%20rentals%20are%20classified,zoning%20restrictions%2C%20or%20occupancy%20limits.","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"712","name":"SEA STAR PROPERTY MANAGEMENT LLC","units":"38","addrs":"38","counties":"Lee","cities":"CAPE CORAL, FORT MYERS","phone":"239.689.4586","score":86.4,"owner":"Florian R Bergmann","email":"","linkedin":"https://www.linkedin.com/in/florian-bergmann-35697446","website":"https://capecoralvacationrentalhomes.com/property-management/","notes":"Missing: Email","batch":2},{"rank":"989","name":"MARVEL VACATION PROPERTIES LLC","units":"26","addrs":"26","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , DEVENPORT, KISSIMMEE","phone":"4077432750","score":86.4,"owner":"Rodrigo Amar","email":"","linkedin":"https://www.linkedin.com/in/rodrigo-amar-80669536a","website":"https://bisprofiles.com/news/fl/fl-29-03-2024","notes":"Missing: Email","batch":2},{"rank":"998","name":"OPULENT PROPERTY MANAGEMENT LLC","units":"26","addrs":"26","counties":"Duval, St. Johns","cities":"JACKSONVILLE, JACKSONVILLE BEACH, JACKSONVILLE BEACH , PONTE VEDRA , PONTE VEDRA BEACH, ST AUGUSTINE ","phone":"9046275700","score":86.4,"owner":"Opulent Property Holdings Inc","email":"","linkedin":"","website":"https://www.stayfinder.com/properties/1349081","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"909","name":"DREAMS N FUN VACATION HOMES LLC","units":"29","addrs":"28","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"407-815-4545","score":86.3,"owner":"Moline Real Property Investment Inc","email":"","linkedin":"","website":"https://hospitable.com/vrbo-alternatives#:~:text=Airbnb,business%20and%20earn%20additional%20income.","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"671","name":"VACATION WORLD USA","units":"40","addrs":"40","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSEMMEE, KISSIMMEE, ORLANDO","phone":"407-496-6364","score":86.2,"owner":"Ciro Noccioli Monteiro Alves","email":"","linkedin":"","website":"https://www.rentalscaleup.com/largest-vacation-rental-companies-us-2025/#:~:text=The%20largest%20listed%20portfolio%20is%20Casago%20(37%2C437%20listings)","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"687","name":"ONLI VACATION HOMES","units":"39","addrs":"39","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE, ORLANDO, ORLANDO ","phone":"4079550521","score":85.8,"owner":"Romulo Debrassi","email":"","linkedin":"https://www.linkedin.com/in/romulo-debrassi-7a2b776a","website":"https://www.nerdwallet.com/travel/learn/alternatives-to-airbnb#:~:text=Airbnb%20may%20dominate%20the%20market,you)%20include%20Vacasa%20and%20Vrbo.","notes":"Missing: Email","batch":2},{"rank":"689","name":"DUNLOCK PROPERTY MANAGEMENT LLC","units":"39","addrs":"39","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMME, KISSIMMEE","phone":"","score":85.8,"owner":"Registered Agents Inc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"763","name":"MHB PROPERTY MANAGEMENT INC","units":"36","addrs":"36","counties":"Lee","cities":"CAPE CORAL","phone":"239-573-4600","score":85.6,"owner":"Markus Bergmann","email":"","linkedin":"https://www.linkedin.com/in/markus-bergmann-410486192","website":"https://www.capecoral4vacation.com/","notes":"Missing: Email","batch":2},{"rank":"599","name":"WAHL GROUP VENTURES INC","units":"45","addrs":"44","counties":"Manatee, Sarasota","cities":"BRADENTON, LAKEWOOD RANCH, SARASOTA","phone":"8137891215","score":85.4,"owner":"Todd Wahl","email":"","linkedin":"https://www.linkedin.com/in/todd-wahl-cfp%C2%AE-cpwa%C2%AE-crpc%E2%84%A2-cepa%C2%AE-29a3653","website":"http://www.wahl-company.com/residential.html","notes":"Missing: Email","batch":2},{"rank":"716","name":"HALLIDAY PROPERTIES (VACATION RENTALS) LLC","units":"38","addrs":"38","counties":"Charlotte, Manatee, Sarasota","cities":" ENGLEWOOD,  SARASOTA, BRADENTON, BRADENTON BEACH, ENGLEWOOD, LONGBOAT KEY, LONGBOAT KEY,, NOKOMIS, SARASOTA, SIESTA KEY","phone":"","score":85.4,"owner":"Austin Halliday","email":"","linkedin":"https://www.linkedin.com/in/james-halliday","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"800","name":"VACASA FLORIDA, LLC","units":"33","addrs":"33","counties":"Collier, Lee, Manatee, Pinellas, Sarasota","cities":"BELLEAIR BEACH, CLEARWATER, CLEARWATER,, HOLMES BEACH, INDIAN ROCKS BEACH, INDIAN SHORES, LARGO, LONGBOAT KEY, MARCO ISLAND, N REDINGTON BEACH, NAPLES, OSPREY, SANIBEL, SARASOTA, ST PETE BEACH, ST PETERSBURG, TREASURE ISLAND, VENICE","phone":"863-280-5942","score":85.3,"owner":"C T Corporation System","email":"","linkedin":"","website":"https://www.vacasa.ca/","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"668","name":"STAY TEAL DOOR LLC","units":"40","addrs":"37","counties":"Hillsborough, Pinellas, Sarasota, Seminole","cities":"BRANDON, CLEARWATER, LARGO, ODESSA, PALM HARBOR, RIVERVIEW, SARASOTA, SEMINOLE, TAMP, TAMPA, TEMPLE TERRACE","phone":"7573736803","score":85.2,"owner":"Jared R Higginbotham","email":"","linkedin":"https://www.linkedin.com/in/jared-higginbotham","website":"https://www.bnbcalc.com/reviews/guesty-review#:~:text=Guesty%20has%20a%20subscription%2Dbased,per%20month%20when%20billed%20monthly.","notes":"Missing: Email","batch":2},{"rank":"771","name":"BEACH RENTAL NETWORK INC","units":"35","addrs":"35","counties":"St. Johns","cities":"SAINT AUGUSTINE, SAINT AUGUSTINE , ST AUGUSTINE, ST. AUGUSTINE, ST. AUGUSTINE , ST.AUGUSTINE","phone":"904.461.8878","score":85.2,"owner":"Brad Layland","email":"","linkedin":"","website":"https://endlesssummervacationrentals.com/aboutus.aspx","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"777","name":"VACANZA RENTALS LLC","units":"35","addrs":"35","counties":"Lee","cities":"CAPE CORAL, CAPE CORAL , CAPTIVA, NORTH FORT MYERS","phone":"850.290.2080","score":85.2,"owner":"Mats Fredrik Maartensson","email":"","linkedin":"","website":"https://www.visitflorida.com/listing/vacanza-rentals-llc/28340/","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"724","name":"GRIMALDI AND WEISS MANAGEMENT LLC","units":"37","addrs":"37","counties":"Brevard, Broward, Monroe, Palm Beach","cities":"BOCA RATON, BOYNTON BEACH, CORAL SPRINGS , DEERFIELD BEACH, DELRAY BEACH, FORT LAUDERDALE, FORT LAUDERDERDALE, HOLLYWOOD, KEY COLONY BEACH, LAUDERDALE BY THE SE, LAUDERDALE BYTHE SEA, OAKLAND PARK, PLANTATION, WILTON MANORS","phone":"","score":85.0,"owner":"Jordan B Grimaldi","email":"","linkedin":"https://www.linkedin.com/in/jordan-grimaldi-4226b4b2","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"902","name":"SG PROPERTY MANAGEMENT & DESIGN LLC","units":"29","addrs":"27","counties":"Broward, Dade","cities":"DANIA BEACH, FORT LAUDERALE, FORT LAUDERDALE, NORTH MIAMI, OAKLAND PARK, PLANTATION, WILTON MANORS","phone":"9546350099","score":84.9,"owner":"Rene A Grajales","email":"","linkedin":"https://www.linkedin.com/in/rene-grajales-106a1132a","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"868","name":"DREAM STAR VACATION HOMES & REAL ESTATE LLC","units":"31","addrs":"25","counties":"Charlotte, Manatee, Sarasota","cities":"BRADENTON, BRADENTON , LAKEWOOD RANCH, LAKEWOOD RANCH , LAKEWOOD RANCH FL , PUNTA GORDA","phone":"9415458662","score":84.8,"owner":"Teresa C Witte","email":"","linkedin":"https://www.linkedin.com/in/teresa-witte-6004271b","website":"https://www.a1vacationhomes.com/owner-profile/200381630702517","notes":"Missing: Email","batch":2},{"rank":"760","name":"SOWAL LUXURY PROPERTIES LLC","units":"36","addrs":"36","counties":"Bay, Okaloosa, Walton","cities":"DESTIN, DESTIN , INLET BEACH, MIRAMAR BEACH, PANAMA CITY BEACH, PANAMA CITY BEACH , ROSEMARY BEACH, SANTA ROSA BEACH, SANTA ROSA BEACH , SEACREST ","phone":"","score":84.6,"owner":"Joseph R Herrmann","email":"","linkedin":"https://www.linkedin.com/in/joseph-r-herrmann-3890a413a","website":"https://sowalrentals.com/","notes":"Missing: Email","batch":2},{"rank":"783","name":"PLENITUDE VILLAS LLC","units":"34","addrs":"33","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMEE, KISSIMMEE, ORLANDO","phone":"3214436873","score":84.6,"owner":"Fernando Vicente Gonzalez","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"847","name":"RIVERSIDE FB INVESTMENTS, LLC","units":"31","addrs":"31","counties":"Broward, Indian River, Martin, Palm Beach","cities":"DELRAY BEACH, HOBE SOUND, JUNO BEACH, JUPITER, LAKE CLARKE SHORES, LIGHTHOUSE POINT, NORTH PALM BEACH, PALM BEACH GARDENS, PALM CITY, RIVIERA BEACH, TEQUESTA, VERO BEACH, WEST PALM BEACH","phone":"978-806-6150","score":84.5,"owner":"Blake R. Chami","email":"","linkedin":"https://www.linkedin.com/in/blake-chami-937711204","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"592","name":"INSIGHT HOSPITALITY MANAGEMENT","units":"45","addrs":"45","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE","phone":"4074402812","score":84.3,"owner":"Richard Medina","email":"","linkedin":"","website":"https://ihmvacations.com/","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"805","name":"TOPLIST VACATION RENTALS LLC","units":"33","addrs":"33","counties":"Osceola","cities":"KISSIMMEE, KISSIMMEE, FL ","phone":"6462511440","score":84.3,"owner":"Joao F Rodrigues De Matos","email":"","linkedin":"https://www.linkedin.com/in/joao-rodrigues-33b495","website":"https://www.toplistvacationrentals.com/","notes":"Missing: Email","batch":2},{"rank":"807","name":"BEACH ROOM RENTALS LLC","units":"33","addrs":"33","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"850-691-5394","score":84.3,"owner":"Stacy K Peery","email":"","linkedin":"","website":"https://book.thesummitpcb.com/rentals/255019","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"818","name":"STEWART REAL ESTATE COMPANY LLC","units":"33","addrs":"33","counties":"Collier","cities":"NAPLES","phone":"239 223 8008","score":84.3,"owner":"David Stewart","email":"Directory@UAlberta.ca","linkedin":"https://www.linkedin.com/in/david-stewart-0785a6232","website":"https://naplesaway.com/aboutus.aspx","notes":"Complete","batch":2},{"rank":"666","name":"WINGER LLC","units":"40","addrs":"40","counties":"Osceola, Polk","cities":"CHAMPIONSGATE, DAVENPORT, DAVEPORT, KISSIMMEE","phone":"4074541638","score":84.2,"owner":"William E Winger","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"883","name":"STAYLAH OF NE FL, LLC","units":"30","addrs":"30","counties":"Duval, Flagler, St. Johns, Volusia","cities":"FLAGLER BEACH, JACKSONVILLE, PALM COAST, PIERSON, PONTE VEDRA BEACH, SAINT AUGUSTINE, ST AUGUSTINE","phone":"4078613888","score":84.1,"owner":"Staylah Llc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"718","name":"AMI PREMIER PROPERTIES, INC.","units":"38","addrs":"31","counties":"Manatee, Sarasota","cities":"ANNA MARIA, BRADENTON BEACH, HOLMES BEACH, SIESTA KEY","phone":"9414476108","score":84.0,"owner":"Jennifer R Warren-Kaleta","email":"","linkedin":"","website":"https://amisun.com/stayterra-files-lawsuit-against-jennifer-kaleta-ami-premier-properties/","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"601","name":"FLORIDIAN VACATION HOMES","units":"44","addrs":"44","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE, KISSIMMEE ","phone":"3216827988","score":83.9,"owner":"Anthony J Dougan","email":"","linkedin":"","website":"https://www.orlandovacationrentals.travel/floridian-riviera-at-windsor-hills-orp5b51967x","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"832","name":"DNA MANAGEMENT GROUP, LLC","units":"32","addrs":"32","counties":"St. Johns","cities":"SAINT AUGUSTINE, ST AUGUSTINE, ST. AUGUSTINE","phone":"9046864824","score":83.9,"owner":"Mustafa M Ameen","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"837","name":"DREAM DESTINATIONS 30A LUXURY RENTALS LLC","units":"32","addrs":"32","counties":"Walton","cities":"SANTA ROSA BEACH","phone":"8505170244","score":83.9,"owner":"Fatma Pediz","email":"","linkedin":"https://www.linkedin.com/in/fatma-pediz-cpa-2a50386","website":"https://dreamdestinations30a.com/941234/","notes":"Missing: Email","batch":2},{"rank":"698","name":"NAPLES VACATIONS LLC","units":"39","addrs":"39","counties":"Collier, Lee","cities":"BONITA SPRINGS, NAPLES","phone":"2393337489","score":83.8,"owner":"Matthew Bianchini","email":"","linkedin":"https://www.linkedin.com/in/matthew-bianchini-2898a38a","website":"https://naplesvacations.com/vacation-rentals/m/","notes":"Missing: Email","batch":2},{"rank":"648","name":"VIDORRA LLC","units":"41","addrs":"40","counties":"Flagler, St. Johns","cities":"PALM COAST , SAINT AUGUSTINE, SAINT AUGUSTINE , ST. AUGUSTINE","phone":"9045019221","score":83.7,"owner":"Andrew Mattison","email":"","linkedin":"https://www.linkedin.com/in/andrew-mattison-3610464","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"912","name":"GREEN HEART SMART SOLUTIONS LLC","units":"29","addrs":"29","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, DAVENPORT , KISSIMMEE, ORLANDO","phone":"(954) 864-4781","score":83.7,"owner":"Luiz Marques Pinheiro","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"871","name":"AAA COASTAL MANAGEMENT LLC","units":"31","addrs":"31","counties":"Lee","cities":"CAPE CORAL, FORT MYERS, FORT MYERS BEACH, FORT MYERS BEACH ","phone":"239-314-5691","score":83.5,"owner":"Heather Albert","email":"","linkedin":"https://www.linkedin.com/in/healbert","website":"https://coastalvacationproperties.net/about-us/","notes":"Missing: Email","batch":2},{"rank":"713","name":"SUNNY DREAMS FACTORY LLC","units":"38","addrs":"38","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, PLACIDA, PORT CHARLOTTE, ROTONDA WEST","phone":"941-716-0375","score":83.4,"owner":"Po Box 3516","email":"","linkedin":"","website":"http://sunnydreams.com/","notes":"Missing: LinkedIn, Email","batch":2},{"rank":"667","name":"GLOBAL MARKETING SERVICES, INC.","units":"40","addrs":"35","counties":"Charlotte, Lake, Lee, Orange, Polk, Sarasota","cities":"CAPE CORAL, CLERMONT, DAVENPORT, ENGLEWOOD, ORLANDO, PORT CHARLOTTE, PUNTA GORDA, ROTONDA WEST, SARASOTA","phone":"4077781889","score":83.2,"owner":"Earle Josiah","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"730","name":"CENTRAL FLORIDA HOME MANAGEMENT INC","units":"37","addrs":"26","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE","phone":"407.745.9351","score":83.1,"owner":"David R Kassar","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"895","name":"DREAM VACATION RENTALS INC","units":"30","addrs":"30","counties":"Lee","cities":"CAPTIVA, SANIBEL","phone":"239-284-3106","score":83.1,"owner":"Duong T Nguyen","email":"","linkedin":"https://www.linkedin.com/in/duong-t-nguyen-95898b45","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"544","name":"LVCC INC","units":"49","addrs":"49","counties":"Lee","cities":"CAPE CORAL, FORT MYERS","phone":"239-703-0807","score":83.0,"owner":"Rosa Winklbauer","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"954","name":"EDGEWATER REALTY AND HOMES LLC","units":"28","addrs":"25","counties":"Collier, Lee","cities":"ESTERO, FORT MYERS, MARCO ISLAND, NAPLES","phone":"2395954065","score":83.0,"owner":"Maurice L Cossairt","email":"","linkedin":"https://www.linkedin.com/in/maurice-cossairt-64b2727a","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"772","name":"FOREVER DESTIN BEACH RENTALS LLC","units":"35","addrs":"33","counties":"Walton","cities":"MIRAMAR BEACH","phone":"8505866642","score":82.9,"owner":"Jana Morgan","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":2},{"rank":"920","name":"COASTLINE REAL ESTATE & PROPERTY MANAGEMENT GROUP, LLC","units":"29","addrs":"29","counties":"Walton","cities":"MIRAMAR BEACH, SANTA ROSA BEACH","phone":"850-585-3856","score":82.7,"owner":"Kelly M Burgess","email":"","linkedin":"https://www.linkedin.com/in/kelly-burgess-51176536b","website":"https://www.mycoastlineproperties.com/beachside-ii-4228-on-beach-orp5b56e70x","notes":"Missing: Email","batch":2},{"rank":"925","name":"SALTY MERMAID VACATION RENTALS LLC","units":"29","addrs":"29","counties":"Manatee","cities":"ANNA MARIA, BRADENTON, BRADENTON BEACH, HOLMES BEACH","phone":"941-254-6131","score":82.7,"owner":"Elizabeth Blandford","email":"","linkedin":"https://www.linkedin.com/in/elizabeth-blandford-31aba855","website":"","notes":"Missing: Website, Email","batch":2},{"rank":"560","name":"SANDESTIN INVESTMENTS LLC","units":"48","addrs":"48","counties":"Walton","cities":"MIRAMAR BEACH","phone":"8502678000","score":82.6,"owner":"Llc Sandestin Management Company","email":"","linkedin":"","website":"https://www.sandestin.com/about/rental-management","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"865","name":"RNB MANAGEMENT SERVICES LLC","units":"31","addrs":"31","counties":"Okaloosa, Santa Rosa, Walton","cities":"DESTIN, MIRAMAR BEACH, NAVARRE","phone":"","score":82.5,"owner":"Barry Tang","email":"","linkedin":"https://www.linkedin.com/in/barry-tang-14745243","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"1026","name":"REIMAGINE RENOVATION MRE LLC","units":"25","addrs":"25","counties":"Osceola, Polk, Volusia","cities":"DAVENPORT, DAVENPORT, , DAYTONA BEACH, HAINES CITY, KISSIMMEE","phone":"4072230993","score":82.0,"owner":"Michelle Tayseer Elsaid","email":"","linkedin":"https://www.linkedin.com/in/michelle-elsaid-654122113","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"585","name":"P2 GLOBAL INVESTMENT GROUP LLC","units":"46","addrs":"46","counties":"Osceola","cities":"KISSIMMEE","phone":"407-818-1992","score":81.8,"owner":"Paula Casey","email":"","linkedin":"","website":"https://www.city-data.com/business-entities/Kissimmee-FL-P.html","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"781","name":"CHARLOTTE WALLACE LLC","units":"34","addrs":"34","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"8632470623","score":81.8,"owner":"Charlotte Olivia Elsa Wallace","email":"","linkedin":"https://www.linkedin.com/in/charlotte-wallace-40b735393","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"785","name":"LOVESUN ENTERPRISES LLC","units":"34","addrs":"34","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"4079732545","score":81.8,"owner":"Russell J Hart","email":"","linkedin":"https://www.linkedin.com/in/russell-hart-62a321382","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"962","name":"LE CHATEAU PROPERTIES LLC","units":"27","addrs":"27","counties":"Broward","cities":"DEERFIELD BEACH, FORT LAUDERDALE, OAKLAND PARK, POMPANO BEACH, WILTON MANORS","phone":"954-605-1692","score":81.8,"owner":"Alex Karamanoglou","email":"","linkedin":"","website":"https://www.bookabach.co.nz/holiday-accommodation/p2683247vb?rfrr=HOT.HIS.question.link.click","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"976","name":"AMERICAN DREAM N FL REALTY LLC","units":"27","addrs":"27","counties":"Taylor","cities":"PERRY, STEINHATCHEE","phone":"8508432648","score":81.8,"owner":"Hope Harvey Webb","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"602","name":"PREMIER PROPERTIES OF SOUTHWEST FLORIDA, LLC","units":"44","addrs":"26","counties":"Collier, Orange, Pinellas","cities":"BELLEAIR BLUFFS, BONITA SPRINGS, INDIAN ROCKS BEACH, INDIAN SHORES, LARGO, MADEIRA BEACH, NAPLES, ORLANDO","phone":"2394032200","score":81.6,"owner":"Scott Lutgert","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"611","name":"NAPLES VACATION RENTALS LLC","units":"44","addrs":"36","counties":"Collier","cities":"NAPLES","phone":"239.219.9999","score":81.6,"owner":"Roger B Roberts","email":"","linkedin":"https://www.linkedin.com/in/roger-roberts-realtor-compass","website":"https://www.itrip.net/property-management/naples","notes":"Missing: Email","batch":3},{"rank":"759","name":"DESTIN COASTAL ESCAPES LLC","units":"36","addrs":"35","counties":"Okaloosa, Walton","cities":"DESTIN, FORT WALTON BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"8507337447","score":81.5,"owner":"Christopher R Harper","email":"","linkedin":"https://www.linkedin.com/in/christopher-harper-270339336","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"597","name":"SANIBEL VACATIONS LLC","units":"45","addrs":"45","counties":"Lee","cities":"CAPTIVA, SANIBEL","phone":"239-691-2265","score":81.3,"owner":"Rob Pailes","email":"","linkedin":"","website":"https://www.sblvacations.com/policies/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"580","name":"COASTAL BREEZE HOLDINGS LLC","units":"46","addrs":"35","counties":"Bay, Collier, Lee, Monroe","cities":"FORT MYERS, FORT MYERS BEACH, FT MYERS BEACH, MARATHON, MARCO ISLAND, NAPLES, PANAMA CITY BEACH","phone":"612-860-1157","score":81.2,"owner":"Thomas W Renard","email":"","linkedin":"https://www.linkedin.com/in/trip-renard","website":"https://coastalbreezevacationrentals.com/real-estate-services/","notes":"Missing: Email","batch":3},{"rank":"731","name":"QUALITY VACATION HOMES LLC","units":"37","addrs":"37","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE, KISSMMEE","phone":"","score":81.0,"owner":"Rodrigo Moreira","email":"","linkedin":"https://www.linkedin.com/in/rodrigo-moreira1000","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"827","name":"ELEMENT ACQUISITIONS LLC","units":"32","addrs":"32","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"4074878000","score":80.9,"owner":"Matthew Deal","email":"","linkedin":"https://www.linkedin.com/in/matthewdeal","website":"https://elementvacationhomes.com/","notes":"Missing: Email","batch":3},{"rank":"551","name":"VACAYEASE, LLC","units":"48","addrs":"47","counties":"Orange, Osceola, Polk","cities":"CHAMPIONSGATE, DAVENPORT, KISSIMMEE, ORLANDO, REUNION","phone":"","score":80.8,"owner":"Rafael Rodriguez","email":"","linkedin":"https://www.linkedin.com/in/raf-rodriguez","website":"https://www.lulich.com/short-term-rental-laws-for-airbnb-hosts-and-how-a-real-estate-lawyer-can-help/#:~:text=The%20state%20classifies%20most%20short,and%20Professional%20Regulation%20(DBPR).","notes":"Missing: Email","batch":3},{"rank":"605","name":"OD INVESTMENTS HOMES LLC","units":"44","addrs":"34","counties":"Lake, Orange, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE, ORLANDO","phone":"8434469274","score":80.8,"owner":"Af Consulting Group Usa Llc","email":"","linkedin":"","website":"https://www.orlandodhomes.com/about-us","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"941","name":"SWL REALTY LLC","units":"28","addrs":"27","counties":"Volusia","cities":"DAYTONA BEACH, DAYTONA BEACH , DAYTONA BEACH SHORES, PORT ORANGE","phone":"7123631099","score":80.8,"owner":"Lucas D Lamoureux","email":"","linkedin":"https://www.linkedin.com/in/lucas-lamoureux","website":"https://www.simplyhired.com/q-vacation-rentals-l-florida-jobs.html?q=vacation-rentals&l=florida","notes":"Missing: Email","batch":3},{"rank":"624","name":"BRIGITTE HEINDL CONSULTING INC","units":"43","addrs":"43","counties":"Lee","cities":"CAPE CORAL, FT MYERS BEACH","phone":"239.540.3485","score":80.5,"owner":"Klaus Reinig","email":"","linkedin":"","website":"https://www.brigitteheindlconsultinginc.com/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"1011","name":"NAPLES FLORIDA VACATION HOMES LLC","units":"26","addrs":"22","counties":"Collier, Lee","cities":"BONITA SPRINGS, NAPLES","phone":"239.676.0088","score":80.3,"owner":"Kristen Jasinski","email":"","linkedin":"","website":"https://www.naplesfloridavacationhomes.com/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"822","name":"KEYS OCEAN RENTALS INC.","units":"32","addrs":"29","counties":"Monroe","cities":"ISLAMORADA, KEY COLONY BEACH, MARATHON, TAVERNIER","phone":"3053075583","score":80.2,"owner":"Mallory Pinto","email":"","linkedin":"https://www.linkedin.com/in/mallory-pinto-88456078","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"842","name":"SEA GYPSY VACATION RENTALS LLC","units":"32","addrs":"29","counties":"Lee","cities":"FORT MYERS BEACH, FORT MYERS BEACH , FT MYERS","phone":"954.415.2233","score":80.2,"owner":"Llc Nautical Marketing","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"890","name":"DESTIN-VESTMENTS 3 INC.","units":"30","addrs":"30","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"7577491284","score":80.1,"owner":"Matthew R Reich","email":"","linkedin":"https://www.linkedin.com/in/matthew-reich-755a1876","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"893","name":"30A BEACH STAYS AND VACATIONS LLC","units":"30","addrs":"30","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, PT WASHINGTON, SANTA ROSA BEACH","phone":"8508559501","score":80.1,"owner":"Alexandra Chaney","email":"","linkedin":"","website":"https://30abeachstays.com/privacy-policy/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"896","name":"COASTAL BREEZE GETAWAYS LLC.","units":"30","addrs":"30","counties":"Manatee, Sarasota","cities":"BRADENTON, SARASOTA","phone":"4079704502","score":80.1,"owner":"John Mcnaught","email":"","linkedin":"https://www.linkedin.com/in/john-j-mcnaught","website":"https://bisprofiles.com/news/fl/fl-28-05-2025","notes":"Missing: Email","batch":3},{"rank":"969","name":"RBR PROPERTY INVESTMENTS LLC","units":"27","addrs":"25","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVEMPORT, DAVENPORT, KISSIMMEE","phone":"4074509244","score":79.9,"owner":"Marco Aurelio Romero Ribeiro","email":"","linkedin":"https://www.linkedin.com/in/marco-romero-32456a253","website":"https://www.rbrorlando.com/","notes":"Missing: Email","batch":3},{"rank":"908","name":"LANDCOP LLC","units":"29","addrs":"29","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE, KISSSIMMEE","phone":"4079324079","score":79.7,"owner":"Gianfranco Coppola","email":"","linkedin":"","website":"https://www.city-data.com/business-entities/Kissimmee-FL-L.html","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"910","name":"DCB ENTERPRISES FLORIDA INC","units":"29","addrs":"29","counties":"Osceola, Polk","cities":"DAVENPORT, DAVENPORT , DEAVENPORT, KISSIMMEE, KISSIMMEE , SAINT CLOUD","phone":"4074089602","score":79.7,"owner":"David C Bevan","email":"","linkedin":"","website":"https://www.funstayflorida.com/blog/floridas-short-term-rental-laws-in-2025/#:~:text=Short%2Dterm%20rentals%20are%20classified,zoning%20restrictions%2C%20or%20occupancy%20limits.","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"808","name":"COAST PROPERTY MANAGEMENT SERVICES CORP","units":"33","addrs":"33","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"","score":79.3,"owner":"Jakob Walker","email":"","linkedin":"https://www.linkedin.com/in/jakob-walker-68849b96","website":"https://www.funstayflorida.com/blog/floridas-short-term-rental-laws-in-2025/#:~:text=Short%2Dterm%20rentals%20are%20classified,zoning%20restrictions%2C%20or%20occupancy%20limits.","notes":"Missing: Email","batch":3},{"rank":"564","name":"SR SARASOTA LLC","units":"48","addrs":"44","counties":"Sarasota","cities":"LONGBOAT KEY, SARASOTA, SIESTA KEY","phone":"941-500-5477","score":79.2,"owner":"Hans R Kirkegaard","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"953","name":"INFINITY SUNSETS, INC.","units":"28","addrs":"28","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, PLACIDA, PORT CHARLOTTE, ROTONDA WEST","phone":"9416972175","score":79.2,"owner":"Michel Ruiz","email":"","linkedin":"https://www.linkedin.com/in/michel-ruiz-471526284","website":"https://www.mylighthouse.com/resources/blog/largest-vacation-rental-companies#:~:text=1.,management%20for%20short%2Dterm%20rentals.","notes":"Missing: Email","batch":3},{"rank":"641","name":"SANDY TOES AND SALTY HAIR LLC","units":"42","addrs":"41","counties":"Manatee","cities":"ANNA MARIA, ANNA MARIA , BRADENTON, BRADENTON BEACH, BRADENTON BEACH , HOLMES BEACH, HOLMES BEACH , LONGBOAT KEY","phone":"9412703846","score":79.1,"owner":"Claire Carter","email":"","linkedin":"","website":"https://beachretreatsfl.com/beach-retreats-contract/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"788","name":"SOUTHERN COMFORT PROPERTIES LLC","units":"34","addrs":"29","counties":"Alachua","cities":"GAINESILLE, GAINESVILLE, GAINESVILLE , HIGH SPRINGS","phone":"646-221-9276","score":78.9,"owner":"James A. Carson","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"696","name":"SEA BREEZE INTERNATIONAL MGMT CORP","units":"39","addrs":"39","counties":"Lee","cities":"CAPE CORAL","phone":"234.541.9684","score":78.8,"owner":"Lars Rotthaus","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"654","name":"LET IT HAPPEN LLC","units":"41","addrs":"41","counties":"Bay, Gulf, Walton","cities":"MEXICO BEACH, MEXICO BEACH , MEXIOC BEACH , MIRAMAR BEACH, PORT ST JOE, PORT ST JOE ","phone":"","score":78.7,"owner":"Brittney L Hulsey","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"655","name":"STELLARDWELLER LLC","units":"41","addrs":"41","counties":"Leon, Okaloosa, Walton","cities":"DESTIN , FORT WALTON BEACH, FORT WALTON BEACH , MIRAMAR BEACH, SHALIMAR , TALLAHASSEE","phone":"","score":78.7,"owner":"Tyler Herndon","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"658","name":"ONCE UPON A BEACH, LLC","units":"41","addrs":"40","counties":"Manatee","cities":"ANNA MARIA, BRADENTON, BRADENTON BEACH, CORTEZ, HOLMES BEACH","phone":"941-584-5844","score":78.7,"owner":"Nicole M Kaleta","email":"","linkedin":"https://www.linkedin.com/in/nicole-kaleta-36927986","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"866","name":"SOUTHERN COAST VACATION PROPERTIES","units":"31","addrs":"31","counties":"Franklin, Gulf","cities":"APALACHICOLA, CAPE SAN BLAS , CARRABELLE, EASTPOINT , PORT ST JOE , SAINT GEORGE ISLAND ","phone":"8503701112","score":78.5,"owner":"Heaven Garrett","email":"","linkedin":"https://www.linkedin.com/in/heaven-garrett-3040611b8","website":"https://www.southerncoastvacationproperties.com/","notes":"Missing: Email","batch":3},{"rank":"867","name":"REALTY BY DALE THOMAS, LLC","units":"31","addrs":"31","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, ENGLEWOOD , NORTH  PORT, NORTH PORT, PORT CHARLOTTE, ROTONDA WEST, VENICE","phone":"","score":78.5,"owner":"Michele Dimos","email":"","linkedin":"https://www.linkedin.com/in/michele-dimos-14a96614","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"870","name":"SIESTA KEY LUXURY RENTAL PROPERTIES-LIDO KEY VACATIONS","units":"31","addrs":"31","counties":"Manatee, Sarasota","cities":"SARAOTA, SARASOTA","phone":"9415391695","score":78.5,"owner":"Llc Gsp Prime Buyer","email":"","linkedin":"","website":"https://primevacations.com/guest-info/guest-login/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"562","name":"SIESTA 4 RENT INC","units":"48","addrs":"43","counties":"Sarasota","cities":"SARASOTA, SIESTA KEY","phone":"941-349-5500","score":78.4,"owner":"Karen Lyons Nowadly","email":"","linkedin":"","website":"https://www.momondo.com/hotels/siesta-key-vacation-rentals-48623.ksp#:~:text=Around%20%24504%20per%20night%20is,price%20will%20likely%20be%20higher.","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"710","name":"DUNES OF SEAGROVE C/O VACASA LLC","units":"38","addrs":"38","counties":"Walton","cities":"SANTA ROSA BEACH","phone":"863-280-5942","score":78.4,"owner":"Steve Howard","email":"","linkedin":"https://www.linkedin.com/in/steve-howard-5349129","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"714","name":"NEW SPRING LAKE PARTNERS, LLC","units":"38","addrs":"38","counties":"Highlands","cities":"SEBRING, SEBRING ","phone":"863-655-5555","score":78.4,"owner":"Llc Lvh Property Holdings","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"717","name":"SUNBURST GETAWAYS LLC","units":"38","addrs":"38","counties":"Lee","cities":"CAPE CORAL, FORT MYERS, JAMES CITY, NORTH FORT MYERS","phone":"8503332743","score":78.4,"owner":"James Devos","email":"","linkedin":"https://www.linkedin.com/in/james-devos-20458516b","website":"","notes":"Missing: Website, Email","batch":3},{"rank":"999","name":"LUXURY RENTALS OF AMELIA LLC","units":"26","addrs":"24","counties":"Nassau","cities":"FERNANDINA BEACH","phone":"904-261-9133","score":78.3,"owner":"Matthew Maddox","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"631","name":"FLORICASA LLC","units":"42","addrs":"40","counties":"Brevard","cities":"CAPE CANAVERAL, CAPE CANAVERAL , CAPE CANVERAL, COCOA BEACH, COCOA BEACH , INDIAN HARBOUR, SATELLITE BEACH","phone":"3213010300","score":78.2,"owner":"Jacqueline Griffin","email":"","linkedin":"https://www.linkedin.com/in/jacqueline-griffin-85760266","website":"https://en.wikipedia.org/wiki/Vacasa#:~:text=Vacasa%2C%20Inc.%20is%20an%20international,properties%20in%2034%20U.S.%20states.","notes":"Missing: Email","batch":3},{"rank":"675","name":"FLORIDA'S FIRST COAST VACATIONS LLC","units":"40","addrs":"40","counties":"Clay, Duval, Nassau, St. Johns","cities":"FERNANDINA BEACH, FLEMING ISLAND, GREEN COVE SPRINGS, JACKSONVILLE, JACKSONVILLE BEACH, MIDDLEBURG, ORANGE PARK, PONTE VEDRA BEACH","phone":"","score":78.2,"owner":"Susan E Kowalewski","email":"","linkedin":"","website":"https://www.itrip.net/green-cove-springs-vacation-rental/oak-street-13","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"584","name":"OCEAN PROP VACATION RENTALS IN","units":"46","addrs":"44","counties":"Volusia","cities":"NEW SMYRNA BEACH, PORT ORANGE","phone":"(386)428-0513","score":78.0,"owner":"Todd Weber","email":"","linkedin":"","website":"https://www.kingfishervacations.net/florida-vacation-rental-property-statistics/#:~:text=The%20Florida%20vacation%20rental%20industry,a%207%25%20increase%20since%202019.","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"588","name":"SIESTA KEY LUXURY RENTAL PROPERTIES - LIDO KEY VACATIONS","units":"46","addrs":"44","counties":"Sarasota","cities":"SARASOTA, SIESTA KEY","phone":"9415391695","score":78.0,"owner":"Llc Gsp Prime Buyer","email":"","linkedin":"","website":"https://primevacations.com/guest-info/guest-login/","notes":"Missing: LinkedIn, Email","batch":3},{"rank":"735","name":"ARENA HORSE SHOES OF OCALA, LLC","units":"37","addrs":"37","counties":"Marion","cities":"OCALA","phone":"352-414-7984","score":78.0,"owner":"Oh 45177 Wilmington","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":3},{"rank":"1032","name":"PS ROBINSON EMTERPRISES LLC","units":"25","addrs":"25","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"4078020749","score":78.0,"owner":"Paul Robinson","email":"","linkedin":"https://www.linkedin.com/in/paul-robinson-45004b72","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"646","name":"LUX ST. AUGUSTINE VACATION RENTALS","units":"41","addrs":"41","counties":"St. Johns","cities":"ST AUGUSTINE, ST. AUGUSTINE","phone":"9047704826","score":77.7,"owner":"Michael W Kluger","email":"","linkedin":"","website":"https://luxstavacay.com/","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"693","name":"GASPARVILLAS ISLAND RENTALS IN","units":"39","addrs":"35","counties":"Charlotte, Sarasota","cities":"ENGLEWOOD, PLACIDA, PORT CHARLOTTE, ROTONDA WEST","phone":"941-697-9797","score":77.7,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":4},{"rank":"709","name":"GIBSON BEACH RENTALS INC.","units":"38","addrs":"25","counties":"Bay, Walton","cities":"DESTIN, MIRAMAR BEACH, PANAMA CITY BEACH","phone":"8506366651","score":77.7,"owner":"Joanna Gibson","email":"","linkedin":"https://www.linkedin.com/in/joanna-gibson","website":"https://www.gibsonbeachrentals.com/","notes":"Missing: Email","batch":4},{"rank":"826","name":"BAY HAVEN MANAGEMENT LLC","units":"32","addrs":"27","counties":"Palm Beach","cities":"JUPITER, LANTANA, NORTH PALM BEACH, PALM BEACH GARDENS, PALM BEACH SHORES, RIVIERA BEACH, WEST PALM BEACH","phone":"5614596368","score":77.7,"owner":"Joel Poulin","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"561","name":"EXCLUSIVE 30A LLC","units":"48","addrs":"48","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, SANTA ROSA BEACH, WATERSOUND","phone":"","score":77.6,"owner":"Abbey Sports","email":"","linkedin":"https://www.linkedin.com/in/abbey-sports-2a465b15b","website":"https://www.paradise30a.com/2026/02/13/what-are-the-top-reasons-to-stay-on-30a-in-florida/#:~:text=The%20beaches%20along%2030A%20are,another%20layer%20of%20natural%20appeal.","notes":"Missing: Email","batch":4},{"rank":"765","name":"SUNSTREAM HOTELS AND RESORTS LLC","units":"36","addrs":"36","counties":"Lee","cities":"FT MYERS BEACH, FT. MYERS BEACH, FT. MYERS BEACH ","phone":"239-765-4111","score":77.6,"owner":"David A Lawrence","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"575","name":"HAMILTON, JACQUE","units":"47","addrs":"47","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"336-926-4425","score":77.2,"owner":"Juan F Elizalde","email":"","linkedin":"https://www.linkedin.com/in/juan-elizalde-1b65416a","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"770","name":"CABOT CITRUS OPCO LLC","units":"35","addrs":"35","counties":"Hernando","cities":"BROOKSVILLE","phone":"352-796-5500","score":77.2,"owner":"Cdh Citrus Co.","email":"","linkedin":"","website":"https://www.hotel-online.com/news/restoration-plans-underway-at-historic-plantation-resort-on-crystal-river#:~:text=The%20historic%20Plantation%20Resort%20on,from%20last%20year's%20hurricane%20season.","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"774","name":"GRAYT 30A VACATIONS INC","units":"35","addrs":"35","counties":"Walton","cities":"SANTA ROSA BEACH","phone":"844-941-1213","score":77.2,"owner":"Jerri P Bryant","email":"","linkedin":"","website":"https://www.grayt30avacations.com/property-management-solutions","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"948","name":"STAY AT 30A VACATION RENTALS","units":"28","addrs":"28","counties":"Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH, SEACREST, SEACREST BEACH, SEAGROVE, WATERCOLOR, WATERSOUND","phone":"8503295050","score":77.2,"owner":"Annie Anson","email":"","linkedin":"https://www.linkedin.com/in/annie-anson-7538719","website":"https://www.stayat30avacationrentals.com/","notes":"Missing: Email","batch":4},{"rank":"1004","name":"KASTLE KEEPERS LLC","units":"26","addrs":"25","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, MIRIMAR BEACH","phone":"850.269.7793","score":76.9,"owner":"Herbert Stephens","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"555","name":"COCHRAN JIM","units":"48","addrs":"47","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"850.650.4544","score":76.8,"owner":"None","email":"","linkedin":"https://www.linkedin.com/in/none-noe-2613a6218","website":"https://realorganicproject.org/jim-cochran-growing-real-organic-strawberries-in-california/","notes":"Missing: Email","batch":4},{"rank":"586","name":"ARNIE BENNETT","units":"46","addrs":"46","counties":"Volusia, Walton","cities":"NEW SMYRNA BEACH","phone":"386-689-5491","score":76.8,"owner":"Arnold B Green","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"688","name":"COSTAMAR VACATION HOMES LLC","units":"39","addrs":"39","counties":"Osceola","cities":"DAVENPORT, KISSIMMEE, KISSIMMEE , KISSIMMEE F","phone":"","score":76.8,"owner":"Marcelo Pasquarelli Costa","email":"","linkedin":"https://www.linkedin.com/in/marcelo-pasquarelli-602b89263","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"697","name":"ASSOCIATED VACATION RENTALS LLC","units":"39","addrs":"39","counties":"Lee","cities":"CAPE CORAL, CAPE CORAL , CAPECORAL","phone":"","score":76.8,"owner":"Joel Kramer","email":"","linkedin":"https://www.linkedin.com/in/joel-kramer-95a13210","website":"https://www.apmhelp.com/blog/property-management-licensing-requirements-florida#:~:text=Unlike%20many%20other%20states%2C%20Florida,within%20the%20state's%20legal%20framework.","notes":"Missing: Email","batch":4},{"rank":"793","name":"HIGHPOINT C/O VACASA LLC","units":"34","addrs":"34","counties":"Walton","cities":"INLET BEACH, SEACREST, SEACREST  ","phone":"863-280-5942","score":76.8,"owner":"Eric Breon","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"984","name":"MARATHON VACATION COM INC","units":"26","addrs":"23","counties":"Monroe","cities":"ISLAMORADA, KEY COLONY BEACH, MARATHON, TAVERNIER","phone":"305.735.4095","score":76.8,"owner":"Dakota Green","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"750","name":"SUNSHINE STATE VILLAS","units":"36","addrs":"36","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, HAINES CITY, KISSIMMEE","phone":"4074948347","score":76.6,"owner":"Timothy Woodward","email":"","linkedin":"https://www.linkedin.com/in/timothydwoodward","website":"https://sunshinestatevillas.com/","notes":"Missing: Email","batch":4},{"rank":"756","name":"88 ENTERPRISE GROUP LLC","units":"36","addrs":"36","counties":"Lake, Orange, Osceola, Polk","cities":"CLERMONT, DAVENPORT, KISSIMMEE, ORLANDO","phone":"","score":76.6,"owner":"Kerry King","email":"","linkedin":"https://www.linkedin.com/in/kerry-king-28544714","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"596","name":"SUNDIAL GETAWAYS, LLC","units":"45","addrs":"45","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, SANTA ROSA BEACH","phone":"","score":76.3,"owner":"Registered Agents Inc","email":"","linkedin":"","website":"https://www.kingfishervacations.net/florida-vacation-rental-property-statistics/#:~:text=The%20Florida%20vacation%20rental%20industry,a%207%25%20increase%20since%202019.","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"986","name":"BEST OF 52 LLC","units":"26","addrs":"22","counties":"Bay, Broward, Dade, Palm Beach, Walton","cities":"BOCA RATON, FORT LAUDERDALE, INLET BEACH, MIAMI BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"303-220-0183","score":76.3,"owner":"Co 80202 Denver","email":"","linkedin":"","website":"https://www.inspiratorealestate.com/owners","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"737","name":"CAPE SAN BLAS VACATION RENTALS","units":"37","addrs":"37","counties":"Gulf","cities":"PORT ST JOE, PORT ST. JOE","phone":"(850)229-6916","score":76.0,"owner":"Ronald B Pickett","email":"","linkedin":"","website":"https://www.capesanblasvacationrentals.com/","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"607","name":"A1A COASTAL VENTURES LLC","units":"44","addrs":"44","counties":"Duval, St. Johns","cities":"ATLANTIC BEACH, JACKSONVILLE, JACKSONVILLE BEACH, PONTE VEDRA BEACH, ST AUGUSTINE","phone":"","score":75.9,"owner":"Lori L Neighbors","email":"","linkedin":"https://www.linkedin.com/in/lori-neighbors","website":"https://suncastleproperties.com/terms-conditions","notes":"Missing: Email","batch":4},{"rank":"704","name":"BVR MANAGEMENT LLC","units":"38","addrs":"28","counties":"Osceola","cities":"KISSIMME, KISSIMMEE, KISSIMMEE , KISSIMMMEE","phone":"321 677-0444","score":75.9,"owner":"Gustavo Betancourt","email":"","linkedin":"https://www.linkedin.com/in/gustavo-betancourt-3642a874","website":"https://www.bellavidavacation.com/management.html","notes":"Missing: Email","batch":4},{"rank":"831","name":"TRINO HOLDINGS LLC","units":"32","addrs":"32","counties":"St. Johns","cities":"ST AUGUSTINE, ST. AUGUSTINE, ST. AUGUSTNE","phone":"904-540-9660","score":75.9,"owner":"David Manaute Coriat","email":"","linkedin":"https://www.linkedin.com/in/david-manaute-49960331","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"790","name":"SEAGRAPE OF NORTHWEST FLA INC","units":"34","addrs":"33","counties":"Escambia","cities":"PENSACOLA","phone":"850-492-1102","score":75.6,"owner":"Susan Carleton","email":"","linkedin":"https://www.linkedin.com/in/susan-carleton-258a377","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"620","name":"AVEDEEN THOMASZADEH","units":"43","addrs":"43","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"3106997039","score":75.5,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":4},{"rank":"862","name":"RENT WATERSCAPE LLC","units":"31","addrs":"31","counties":"Okaloosa","cities":"FORT WALTON BEACH, FT WALTON BEACH","phone":"2066211075","score":75.5,"owner":"","email":"","linkedin":"","website":"https://floridaparcels.com/property/56/lookup/02S/24W/13","notes":"Missing: Owner Name, LinkedIn, Email","batch":4},{"rank":"874","name":"KEYSCATIONS LLC","units":"30","addrs":"30","counties":"Monroe","cities":"BIG PINE KEY, KEY COLONY BEACH, LONG KEY, MARATHON","phone":"7866479340","score":75.1,"owner":"Michelle Felizola","email":"","linkedin":"https://www.linkedin.com/in/karina-felizola-82062696","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"892","name":"30A VACAY LLC","units":"30","addrs":"30","counties":"Walton","cities":"INLET BEACH, INLET BEACH , SANTA ROSA BEACH, SANTA ROSA BEACH ","phone":"8506960936","score":75.1,"owner":"","email":"","linkedin":"","website":"https://www.30a-vacay.com/terms-conditions/","notes":"Missing: Owner Name, LinkedIn, Email","batch":4},{"rank":"761","name":"BEACH BUMS RENTAL PROPERTIES, LLC","units":"36","addrs":"22","counties":"Okaloosa, Walton","cities":"#21, DESTIN, MIRAMAR BEACH, MIRAMAR BEACH , SANTA ROSA BEACH","phone":"850-654-7177","score":75.0,"owner":"Monica M Eldredge","email":"","linkedin":"https://www.linkedin.com/in/monica-eldredge-71720592","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"972","name":"SKIS & SEAS VACATION RENTALS LLC","units":"27","addrs":"19","counties":"Okaloosa, Walton","cities":"FORT WALTON BEACH, MIRAMAR BEACH","phone":"850.399.0120","score":75.0,"owner":"Justin Phelps","email":"","linkedin":"https://www.linkedin.com/in/justin-phelps-8435b4360","website":"https://www.skisandseas.com/","notes":"Missing: Email","batch":4},{"rank":"649","name":"NEWMAN DAILEY RESORT PROP","units":"41","addrs":"41","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"850-837-1071","score":74.7,"owner":"Jeanne Dailey","email":"","linkedin":"","website":"https://www.destinvacation.com/","notes":"Missing: LinkedIn, Email","batch":4},{"rank":"651","name":"MARTIN RYAN","units":"41","addrs":"41","counties":"Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH, SANTA ROSABEACH, SEACREST BEACH","phone":"850-368-3170","score":74.7,"owner":"Ryan Martin","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"657","name":"SANDCASTLES VACATION RENTALS LLC","units":"41","addrs":"38","counties":"Franklin","cities":"EASTPOINT, ST. GEORGE ISLAND, ST. GEORGE ISLAND ","phone":"","score":74.7,"owner":"Jamie L Martina","email":"","linkedin":"https://www.linkedin.com/in/jamie-martina-17206311","website":"https://www.sandcastlesvacationrentals.com/vacation-rentals/terms-conditions/","notes":"Missing: Email","batch":4},{"rank":"899","name":"FLOW FS LLC","units":"29","addrs":"29","counties":"Dade","cities":"MIAMI","phone":"3057892766","score":74.7,"owner":"Corporation Service Company","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"916","name":"ALL SEASONS COLLECTION 30A LLC","units":"29","addrs":"29","counties":"Walton","cities":"ROSEMARY, ROSEMARY BEACH, ROSEMARY BEACH ","phone":"504.352.9267","score":74.7,"owner":"Inc. American Safety Council","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"923","name":"ANNA MARIA ACCOMMODATIONS LLC","units":"29","addrs":"29","counties":"Manatee","cities":"ANNA MARIA, BRADENTON BEACH, HOLMES BEACH","phone":"9417578226","score":74.7,"owner":"Carmine N Stella","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"927","name":"NOMADIC VACAYS LLC","units":"29","addrs":"29","counties":"Collier","cities":"NAPLES","phone":"239-317-6096","score":74.7,"owner":"Taylor Moore","email":"","linkedin":"https://www.linkedin.com/in/taylor-moore-1146325","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"869","name":"DILLEY, BETH","units":"31","addrs":"31","counties":"Charlotte, Manatee, Sarasota","cities":"ENGLEWOOD, LONGBOAT KEY, SARASOTA, SARASOTA , VENICE","phone":"941-306-4242","score":74.5,"owner":"James Dilley","email":"","linkedin":"https://www.linkedin.com/in/james-dilley-89126368","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"971","name":"MR HOST PROPERTY MANAGEMENT LLC","units":"27","addrs":"22","counties":"Osceola","cities":"34746, DAVENPORT, KISSIMMEE","phone":"3219454796","score":74.4,"owner":"Groven Business Corp","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"665","name":"GOLF RESORT INVERNESS LLC","units":"40","addrs":"35","counties":"Citrus","cities":"INVERNESS","phone":"352.637.1140","score":74.2,"owner":"Chris G Matser","email":"","linkedin":"https://www.linkedin.com/in/chris-matser-2657475","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"672","name":"VICENTE GROUP LLC","units":"40","addrs":"40","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE, KISSSIMMEE","phone":"","score":74.2,"owner":"Brandon Vicente","email":"","linkedin":"https://www.linkedin.com/in/brandon-vicente-6905a02a5","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"854","name":"EAST COAST LIVING LLC","units":"31","addrs":"30","counties":"Brevard","cities":"CAPE CANAVERAL, COCOA BEACH, INDIALANTIC, INDIAN HARBOUR BEACH, INIDIALANTIC, MELBOURNE, MELBOURNE BEACH, PALM BAY","phone":"3219173985","score":74.2,"owner":"Janice C Mccullough","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":4},{"rank":"943","name":"WORLD TRAVELER X, INC.","units":"28","addrs":"28","counties":"Brevard","cities":"CAPE CANAVERAL, COCOA, COCOA BEACH, MERRITT ISLAND, SATELLITE BEACH","phone":"(321) 305-9973","score":74.2,"owner":"Lauren Barley","email":"","linkedin":"https://www.linkedin.com/in/lauren-barley-a13686125","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"951","name":"HIDDEN TREASURE CAPITAL, INC.","units":"28","addrs":"28","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"850-588-3160","score":74.2,"owner":"Eric Morse","email":"","linkedin":"https://www.linkedin.com/in/eric-morse-35023b20","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"876","name":"HELDRE LARS","units":"30","addrs":"30","counties":"Broward, Lee, Palm Beach","cities":"BOCA RATON, CAPE CORAL, DEERFIELD BEACH, DELRAY BEACH, FT LAUDERDALE, LIGHTHOUSE POINT, POMPANO BEACH, WILTON MANORS","phone":"561.300.3001","score":74.1,"owner":"Lars Heldre","email":"","linkedin":"https://www.linkedin.com/in/lars-heldre-a640708","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"1007","name":"VACATION AT ITS FINEST, LLC","units":"26","addrs":"18","counties":"Okaloosa, Walton","cities":" SANTA ROSA BEACH, DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"8503578222","score":74.1,"owner":"Donna Daugherty","email":"","linkedin":"https://www.linkedin.com/in/donna-daugherty-branch-01188027","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"559","name":"DESTINY BEACH PROPERTIES,LLC","units":"48","addrs":"34","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"","score":73.9,"owner":"Lori Sweeney","email":"","linkedin":"https://www.linkedin.com/in/lori-sweeney-844306a6","website":"","notes":"Missing: Website, Email","batch":4},{"rank":"841","name":"MCDANIEL PROPERTIES FL, LLC","units":"32","addrs":"32","counties":"Escambia","cities":"PENSACOLA, PERDIDO KEY","phone":"","score":73.9,"owner":"John W Mcdaniel","email":"","linkedin":"https://www.linkedin.com/in/jsmcdaniel","website":"https://mcdanielpropertiesfl.com/","notes":"Missing: Email","batch":5},{"rank":"886","name":"VACATION RENTALS AT THE BEACH LLC","units":"30","addrs":"23","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"303-220-0183","score":73.8,"owner":"Weber, Todd V, Jr.","email":"","linkedin":"","website":"https://www.vratb.com/about-us","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"977","name":"BEACH LUXURY VACATIONS, LLC","units":"27","addrs":"27","counties":"Walton","cities":"MIRAMAR BEACH, SANTA ROSA BEACH","phone":"8507370044","score":73.8,"owner":"Tabitha Marvel","email":"","linkedin":"https://www.linkedin.com/in/tabitha-marvel-852a1a67","website":"https://www.beachluxuryvacations.com/","notes":"Missing: Email","batch":5},{"rank":"983","name":"LIVERIGHT VACATIONS LLC","units":"27","addrs":"27","counties":"Collier","cities":"NAPLES","phone":"609-457-8789","score":73.8,"owner":"Donna Risley","email":"","linkedin":"https://www.linkedin.com/in/donna-risley-123547b2","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"652","name":"MARSHALL LANIER & MALLORY MICHAEL","units":"41","addrs":"40","counties":"Bay, Walton","cities":"INLET BEACH, NOT HISPANIC OR LATI, SANTA ROSA BEACH","phone":"334-467-9198","score":73.7,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":5},{"rank":"990","name":"HAPPY PLACE VACATION RENTAL, LLC","units":"26","addrs":"21","counties":"Pinellas","cities":"CLEARWATER BEACH, INDIAN ROCKS BEACH, INDIAN SHORES, MADEIRA BEACH, NORTH REDINGTON BEAC, REDINGTON BEACH, REDINGTON SHORES","phone":"7274921336","score":73.7,"owner":"Greg Mallare","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"796","name":"MANTA PROPERTY MANAGEMENT LLC","units":"34","addrs":"33","counties":"Manatee","cities":"ANNA MARIA, BRADENTON, BRADENTON , BRADENTON BEACH, HOLMES BEACH","phone":"","score":73.6,"owner":"Matthew Cooper","email":"","linkedin":"https://www.linkedin.com/in/matthew-cooper-0527211b","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"966","name":"RED SASH PROPERTIES, LLC","units":"27","addrs":"18","counties":"Hillsborough, Pinellas","cities":"BRANDON, INDIAN ROCKS BEACH, TAMPA","phone":"9312376592","score":73.5,"owner":"Sonya L Alexander","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"633","name":"UNIK VILLAS LLC","units":"42","addrs":"35","counties":"Osceola","cities":"KISSIMMEE","phone":"4078614760","score":73.4,"owner":"Eduardo Bittencourt","email":"","linkedin":"https://www.linkedin.com/in/eduardo-bittencourt-28a9991","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"751","name":"LONG KEY VACATION RENTALS, LLC","units":"36","addrs":"25","counties":"Pinellas","cities":"CLEARWATER, CLEARWATER BEACH, INDIAN ROCKS BEACH, ST PETERSBURG","phone":"727-360-0008","score":73.4,"owner":"Susan Elliott","email":"","linkedin":"https://www.linkedin.com/in/susan-elliott-42b07411","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"1036","name":"LIV GROUP LLC","units":"25","addrs":"22","counties":"Bay, Walton","cities":"INLET BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH, SEACREST","phone":"8594897463","score":73.2,"owner":"Shanoiya S Clark","email":"","linkedin":"https://www.linkedin.com/in/shanoiya-clark-rhodes-m-s-53a91345","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"536","name":"ROSE HEINRICH AND EMMERICH PETER","units":"49","addrs":"49","counties":"Palm Beach","cities":"LAKE WORTH BEACH , RIVIERA BEACH, WEST PALM BEACH, WEST PALM BEACH ","phone":"561-801-0164","score":73.0,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":5},{"rank":"1018","name":"FORT LAUDERDALE STAYS LLC","units":"25","addrs":"25","counties":"Broward","cities":"FORT LAUDERDALE, FORT LAUDERDALE , FT LAUDERDALE, OAKLAND PARK, WILTON MANORS, WILTON MNAORS","phone":"754-701-5660","score":73.0,"owner":"David E Packard","email":"","linkedin":"https://www.linkedin.com/in/david-packard-4926679a","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"1028","name":"FLORIDA INTERNATIONAL HOMES, LLC","units":"25","addrs":"25","counties":"Polk","cities":"HAINES CITY, HAINES CITY ","phone":"863-421-6357","score":73.0,"owner":"Anthony S. Battaglia","email":"","linkedin":"https://www.linkedin.com/in/anthony-battaglia-ba6403177","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"981","name":"SHORE THING PROPERTY SERVICES LLC","units":"27","addrs":"23","counties":"Manatee, Sarasota","cities":"ANNA MARIA, BRADENTON , BRADENTON BEACH, BRADENTON BEACH , HOLMES BEACH, HOLMES BEACH , LONGBOAT KEY, SARASOTA","phone":"9419142354","score":72.9,"owner":"Emily Werner","email":"","linkedin":"","website":"https://hospitable.com/vrbo-alternatives#:~:text=Airbnb,business%20and%20earn%20additional%20income.","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"782","name":"ONE OF ONE - FLORIDA VR LLC","units":"34","addrs":"23","counties":"Hillsborough, Pinellas, Polk, Volusia","cities":"APOLLO BEACH, CLEARWATER, DAYTONA BEACH SHORES, LAKELAND, ST PETERSBURG, TAMPA","phone":"4694126722","score":72.8,"owner":"Inc. One Of One Technologies","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"937","name":"KEAST ENTERPRISES LLC","units":"28","addrs":"27","counties":"Osceola","cities":"KISSIMMEE","phone":"407.566.8518","score":72.8,"owner":"Darren Keast","email":"","linkedin":"https://www.linkedin.com/in/darren-keast-30b5b5233","website":"https://www.orlandosentinel.com/2013/03/31/0401-new-businesses/","notes":"Missing: Email","batch":5},{"rank":"967","name":"FLORIDA NEST","units":"27","addrs":"27","counties":"Hillsborough, Manatee, Pinellas","cities":"BRADENTON, CLEARWATER, GULFPORT, LARGO, PINELLAS PARK, REDINGTON BEACH, SEMINOLE, ST PETERSBURG, ST. PETERSBURG, TAMPA","phone":"386-801-0714","score":72.8,"owner":"Joseph H. Stephan","email":"","linkedin":"https://www.linkedin.com/in/joseph-stephan-9983b398","website":"https://thefloridanest.com/","notes":"Missing: Email","batch":5},{"rank":"904","name":"MURIRI HOLDINGS DBA SOVEREIGN VACATION VILLAS ORLANDO","units":"29","addrs":"29","counties":"Polk","cities":"DAVENPORT","phone":"407.348.9166","score":72.7,"owner":"Ian Jones","email":"","linkedin":"https://www.linkedin.com/in/ian-jones-75817656","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"742","name":"RENTALS IN PARADISE INC","units":"36","addrs":"33","counties":"Monroe","cities":"KEY COLONY BEACH, KEY COLONY BEACH , MARATHON, MARATHON ","phone":"","score":72.2,"owner":"Kathleen Carrillo","email":"","linkedin":"https://www.linkedin.com/in/kathleen-carrillo-50a1138","website":"https://rentalsinmarathonkey.com/","notes":"Missing: Email","batch":5},{"rank":"775","name":"PORTORO HOMES INC.","units":"35","addrs":"35","counties":"Okaloosa, Walton","cities":"ALYS BEACH, DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"","score":72.2,"owner":"","email":"","linkedin":"","website":"https://www.portoro.com/","notes":"Missing: Owner Name, LinkedIn, Email","batch":5},{"rank":"929","name":"KEY COLONY BEACH REALTY INC","units":"28","addrs":"28","counties":"Monroe","cities":"KEY COLONY BEACH","phone":"","score":72.2,"owner":"Inc. Key Colony Beach Realty","email":"","linkedin":"","website":"https://www.keysproperties.com/","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"952","name":"CNE VACATION RENTAL LLC","units":"28","addrs":"28","counties":"Collier","cities":"NAPLES","phone":"","score":72.2,"owner":"Nicole M Bennett","email":"","linkedin":"https://www.linkedin.com/in/nicole-bennett-5a633235","website":"https://www.funstayflorida.com/blog/floridas-short-term-rental-laws-in-2025/#:~:text=Short%2Dterm%20rentals%20are%20classified,zoning%20restrictions%2C%20or%20occupancy%20limits.","notes":"Missing: Email","batch":5},{"rank":"1027","name":"REMI EMERSON VACATION RENTALS LLC","units":"25","addrs":"20","counties":"Brevard, Lake, Osceola, Polk, Volusia","cities":"CLERMONT, DAVENPORT, HAINES CITY, KISSIMMEE, MELBOURNE, NEW SMYRNA BEACH, PORT ORANGE","phone":"","score":72.0,"owner":"Lukasz Sokolowski","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"789","name":"NOMAD HOSPITALITY LLC","units":"34","addrs":"34","counties":"Duval, St. Johns","cities":"JACKSONVILLE, JACKSONVILLE BEACH, NEPTUNE BEACH, PONTE VEDRA","phone":"","score":71.8,"owner":"Registered Agents Inc.","email":"","linkedin":"","website":"https://www.nomadhospitality.co/contact/","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"982","name":"ASSOCIATED VACATION RENTALS, LLC","units":"27","addrs":"27","counties":"Lee","cities":"CAPE CORAL, CAPE CORAL , FT MYERS, NORTH FT MYERS","phone":"","score":71.8,"owner":"Joel Kramer","email":"","linkedin":"https://www.linkedin.com/in/joel-kramer-95a13210","website":"https://www.apmhelp.com/blog/property-management-licensing-requirements-florida#:~:text=Unlike%20many%20other%20states%2C%20Florida,within%20the%20state's%20legal%20framework.","notes":"Missing: Email","batch":5},{"rank":"773","name":"STEINHATCHEE LANDING LLC","units":"35","addrs":"30","counties":"Taylor","cities":"STEINHATCHEE","phone":"352-498-0696","score":71.5,"owner":"R. Dean Fowler","email":"","linkedin":"https://www.linkedin.com/in/dean-fowler-53aa5220","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"956","name":"OCEAN SUNRISE VACATION RENTALS LLC","units":"27","addrs":"20","counties":"Monroe","cities":"ISLAMORADA, KEY LARGO, TAVERNIER","phone":"305.393.9967","score":71.5,"owner":"Angela Sparks","email":"","linkedin":"","website":"http://noorfabulous.blogspot.com/2025/","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"640","name":"FRAN MAXON REAL ESTATE INC","units":"42","addrs":"35","counties":"Manatee","cities":"ANNA MARIA, BRADENTON BEACH, HOLMES BEACH","phone":"","score":71.4,"owner":"Richard Wjr Bell","email":"","linkedin":"","website":"https://www.franmaxonrealestate.com/","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"949","name":"CONCIERGE COTTAGES LLC","units":"28","addrs":"26","counties":"Walton","cities":"INLET BEACH, SANTA ROSA BEACH","phone":"8502703444","score":71.4,"owner":"Justin T Smith","email":"","linkedin":"https://www.linkedin.com/in/justin-smith-49553aa6","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"816","name":"COASTAL BEACH FLORIDA VACATIONS LLC","units":"33","addrs":"33","counties":"Charlotte, Collier","cities":"MARCO ISLAND, MARCO ISLAND , NAPLES, NAPLES , PUNTA GORDA","phone":"","score":71.3,"owner":"Rosemary C Bachar","email":"","linkedin":"","website":"https://www.ftmyersbeachvacations.net/services-for-vacation-rental-home-owners","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"997","name":"HOST MANAGEMENT GROUP LLC","units":"26","addrs":"20","counties":"Brevard, Lake, Osceola, Volusia","cities":"CLERMONT, CLERMONT , DAVENPORT, KISSIMMEE, MELBOURNE, NEW SMYRNA BEACH, PORT ORANGE","phone":"","score":71.2,"owner":"Lukasz Sokolowski","email":"","linkedin":"","website":"https://keycrew.co/company/host-management-group-llc/","notes":"Missing: LinkedIn, Email","batch":5},{"rank":"1019","name":"B&G LUXE PROPERTIES LLC","units":"25","addrs":"25","counties":"Broward","cities":"FORT LAUDERDALE, FORT LAUDERDALE , FORT LUADERDALE , FT LAUDERDALE, POMPANO BEACH, POMPANO BEACH , POMPANP BEACH","phone":"","score":71.0,"owner":"Brandon Rashkin","email":"","linkedin":"https://www.linkedin.com/in/brandon-rashkin-71b81614b","website":"https://www.bgluxeproperties.com/","notes":"Missing: Email","batch":5},{"rank":"606","name":"TOP TIER AT REUNION LLC","units":"44","addrs":"44","counties":"Osceola","cities":"34747, KISSIMMEE, KISSIMMEE ","phone":"","score":70.9,"owner":"Coleen Campbell - Peach","email":"","linkedin":"https://www.linkedin.com/in/coleen-campbell-peach-8249a6138","website":"https://en.wikipedia.org/wiki/Reunion,_Florida#:~:text=Reunion%20Resort%20is%20currently%20owned%20and%20operated%20by%20Kingwood%20International%20Resorts.","notes":"Missing: Email","batch":5},{"rank":"830","name":"UNIVERSAL CORPORATE HOUSING LLC","units":"32","addrs":"32","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"","score":70.9,"owner":"Andrew Tranter","email":"","linkedin":"https://www.linkedin.com/in/andrew-tranter-254a19204","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"958","name":"FAIRWAY PROPERTY MANAGERS INC","units":"27","addrs":"25","counties":"Monroe","cities":"KEY LARGO","phone":"305.367.4280","score":70.9,"owner":"John E Grunow Jr","email":"","linkedin":"https://www.linkedin.com/in/john-grunow-jr-1a22b450","website":"https://www.reefrentals.com/terms-conditions.asp","notes":"Missing: Email","batch":5},{"rank":"565","name":"VACATION RENTALS OF THE FLA KEYS","units":"47","addrs":"36","counties":"Monroe","cities":"DUCK KEY, ISLAMORADA, KEY COLONY BEACH, KEY LARGO, MARATHON","phone":"305-743-8507","score":70.8,"owner":"Aj Steffens Company Llc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"768","name":"KCM MANAGEMENT FLORIDA","units":"35","addrs":"32","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, DAVEPORT, HAINES CITY, KISSIMME, KISSIMMEE","phone":"","score":70.7,"owner":"Ken Craig","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"942","name":"FINEST HOUSE CARE LLC","units":"28","addrs":"22","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"3219454796","score":70.7,"owner":"Leandro Jose Pereira Macedo","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"612","name":"MOLLY PARKER INC","units":"43","addrs":"43","counties":"Monroe","cities":"KEY WEST","phone":"","score":70.5,"owner":"Cindy M Rhoades","email":"","linkedin":"https://www.linkedin.com/in/cindy-m-rhoades-ba17522a","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"1005","name":"SOUTHERN SHORES OF PCB, LLC","units":"26","addrs":"24","counties":"Bay","cities":"PANAMA CITY BEACH, PANAMAM CITY BEACH","phone":"850-832-2394","score":70.3,"owner":"Bickford","email":"","linkedin":"https://www.linkedin.com/in/david-bickford-273529160","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"630","name":"CARIBE COVE CO VACASA, LLC","units":"42","addrs":"42","counties":"Osceola","cities":"KISSIMMEE, KISSIMMEE ","phone":"","score":70.1,"owner":"Llc Mabe Holding","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"610","name":"SEYCHELLES C/O VACASA","units":"44","addrs":"43","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"863-280-5942","score":70.0,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":5},{"rank":"554","name":"SEAGROVE ON THE BEACH PROPERTY RENTALS INC","units":"48","addrs":"17","counties":"Bay, Walton","cities":"PANAMA CITY BEACH, SANTA ROSA BEACH","phone":"850.231.4205","score":69.8,"owner":"Gary A Bennett","email":"","linkedin":"https://www.linkedin.com/in/gary-bennett-19823240","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"570","name":"ORLANDO RESORTS RENTAL LLC","units":"47","addrs":"23","counties":"Orange","cities":"ORLANDO","phone":"407.496.2786","score":69.7,"owner":"Daniel Waldron","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"905","name":"COZY TRIP LLC","units":"29","addrs":"29","counties":"Osceola, Polk","cities":"CHAMPIONS GATE, DAVENPORT, KISSIMMEE","phone":"","score":69.7,"owner":"Tao Li","email":"","linkedin":"https://www.linkedin.com/in/tao-li-129a583","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"792","name":"SAND DOLLAR 1, LLC","units":"34","addrs":"32","counties":"Bay, Walton","cities":"MIRAMAR BEACH, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"","score":69.4,"owner":"James I Chapin","email":"","linkedin":"https://www.linkedin.com/in/jim-chapin-64b4bb283","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"747","name":"CASIOLA BROWARD LLC","units":"36","addrs":"33","counties":"Broward, Palm Beach","cities":"DAVIE, DEERFIELD BEACH, FT LAUDERDALE, HOLLYWOOD, OAKLAND PARK, PARKLAND, PLANTATION, POMPANO BEACH, SOUTHWEST RANCHES, WEST PALM BEACH","phone":"","score":69.2,"owner":"Michael A Lester","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":5},{"rank":"849","name":"AJNB","units":"31","addrs":"30","counties":"Hernando, Pinellas","cities":"CLEARWATER, CLEARWATER BEACH , HERNANDO BEACH, INDIAN ROCKS BEACH, PALM HARBOR","phone":"7273408114","score":69.2,"owner":"Alan F Agoado","email":"","linkedin":"https://www.linkedin.com/in/alan-agoado-8956a8a0","website":"","notes":"Missing: Website, Email","batch":5},{"rank":"703","name":"GIOVANNI CARVALHO GALZERANO","units":"38","addrs":"30","counties":"Orange, Osceola, Polk","cities":"DAVENPORT, KISSIMEEE, KISSIMMEE, KISSIMMEE , ORLANDO","phone":"407-707-4914","score":69.0,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":5},{"rank":"587","name":"DUNE ALLEN REALTY","units":"46","addrs":"45","counties":"Walton","cities":"SANTA ROSA BEACH","phone":"","score":68.9,"owner":"Sabrina P Thornton","email":"","linkedin":"","website":"https://www.beautifulbeach.com/","notes":"Missing: LinkedIn, Email","batch":6},{"rank":"836","name":"DIVING PELICAN REALTY AND RENTALS","units":"32","addrs":"24","counties":"Escambia, Walton","cities":"INLET BEACH, MIRAMAR BEACH, PENSACOLA BEACH, SANTA ROSA BEACH","phone":"9858075333","score":68.9,"owner":"Lyndsay Bastion","email":"","linkedin":"https://www.linkedin.com/in/lyndsay-adams-78840634","website":"https://dprrentals.com/","notes":"Missing: Email","batch":6},{"rank":"691","name":"SUNDESTIN BEACH C/O VACASA LLC","units":"39","addrs":"39","counties":"Okaloosa","cities":"DESTIN","phone":"","score":68.8,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":6},{"rank":"887","name":"HAVEN BEACH RENTALS LLC","units":"30","addrs":"19","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"850-527-5492","score":68.4,"owner":"Lisa Sample","email":"","linkedin":"https://www.linkedin.com/in/lisa-sample-6a237218b","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"1009","name":"EQUISOURCE HOLDINGS CORPORATION","units":"26","addrs":"26","counties":"Okaloosa, Walton","cities":"DESTIN, INLET BEACH, MIRAMAR BEACH, SANTA ROSA, SANTA ROSA BEACH","phone":"850-665-3335","score":68.4,"owner":"Todd S Knight","email":"","linkedin":"https://www.linkedin.com/in/todd-knight-29502b271","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"650","name":"DUNE-ALLEN REALTY INC.","units":"41","addrs":"21","counties":"Walton","cities":"SANTA ROSA BEACH","phone":"8502672121","score":68.2,"owner":"Sara Godwin","email":"","linkedin":"https://www.linkedin.com/in/sara-godwin-5420a365","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"729","name":"GAO LIANNA","units":"37","addrs":"37","counties":"Osceola","cities":"KISSIMMEE, REUNION","phone":"904.923.9943","score":68.0,"owner":"Qiao Li","email":"","linkedin":"https://www.linkedin.com/in/qiao-li-b866b45b","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"1031","name":"FOREAL INVESTMENTS","units":"25","addrs":"25","counties":"Osceola, Polk","cities":"DAVENPORT, HAINES CITY, KISSIEMME, KISSIMMEE","phone":"7864865873","score":68.0,"owner":"Ingrid Better","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"1037","name":"BONHEUR VACATIONS LLC","units":"25","addrs":"25","counties":"Bay, Walton","cities":"INLET BEACH , SANTA ROSA BEACH , SEACREST BEACH , SEAGROVE BEACH ","phone":"","score":68.0,"owner":"Ashley Pavlovich","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"931","name":"ALEJANDRO AZUERO","units":"28","addrs":"27","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMME, KISSIMMEE, KISSIMMIE","phone":"4072149969","score":67.8,"owner":"Alejandro Azuero","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"749","name":"CROFT INTERNATIONAL LLC","units":"36","addrs":"36","counties":"Polk","cities":"DAVENPORT","phone":"","score":67.6,"owner":"Paul P Stewart","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"974","name":"BEACH STAYS VACATIONS, LLC","units":"27","addrs":"19","counties":"Okaloosa, Walton","cities":"DESTIN, FT WALTON BEACH, INLET BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"8503761268","score":67.0,"owner":"John P Moran","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"856","name":"FIRST COAST VACATION RENTAL","units":"31","addrs":"22","counties":"Putnam, St. Johns","cities":"SAINT AUGUSTINE, ST AUGUSTINE, ST. AUGUSTINE, ST. AUGUSTINE , ST. AUGUSTINE BEACH, WELAKA","phone":"9048598311","score":66.9,"owner":"David Ingoldsby","email":"","linkedin":"https://www.linkedin.com/in/david-ingoldsby","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"550","name":"GETAWAYS BY PCB RETREATS","units":"48","addrs":"47","counties":"Bay, Okaloosa","cities":"DESTIN, PANAMA CITY, PANAMA CITY BEACH","phone":"","score":66.8,"owner":"Michael Frawley","email":"","linkedin":"https://www.linkedin.com/in/michael-frawley-09a049102","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"795","name":"WISCHIS FLORIDA LLC","units":"34","addrs":"34","counties":"Lee","cities":"CAPE CORAL, FT MYERS, FT MYERS BEACH","phone":"","score":66.8,"owner":"Marco Wischmeier","email":"","linkedin":"https://www.linkedin.com/in/marco-wischmeier-25131264","website":"https://wischis-florida.com/contact/","notes":"Missing: Email","batch":6},{"rank":"706","name":"LSI VACATION RENTALS","units":"38","addrs":"24","counties":"Bay, Walton","cities":"MIRAMAR BEACH, PANAMA CITY, PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"702-310-3700","score":66.7,"owner":"Llc Lsi Life","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"1024","name":"TROPICAL ISLES REALTY INC","units":"25","addrs":"16","counties":"Pinellas","cities":"CLEARWATER BEACH, INDIAN ROCKS BEACH, INDIAN SHORES, LARGO, ST PETERSBURG","phone":"(813)593-0744","score":66.6,"owner":"Robert M Schmidt","email":"","linkedin":"https://www.linkedin.com/in/bob-schmidt-549051128","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"930","name":"PM COMPANY LLC","units":"28","addrs":"19","counties":"Broward, Palm Beach","cities":"COCONUT CREEK, COCONUT CREEK , WEST PALM BEACH","phone":"(561) 356-8940","score":66.4,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":6},{"rank":"817","name":"HAPPY CAPE BOAT AND VILLA SERVICE","units":"33","addrs":"33","counties":"Lee","cities":"CAPE CORAL, CAPE CORAL ","phone":"2397030103","score":66.3,"owner":"Heiko Sauer","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"819","name":"BMI OF SOUTH WEST FLORIDA","units":"33","addrs":"33","counties":"Lee","cities":"CAPE CORAL , FORT MYERS BEACH","phone":"2395495400","score":66.3,"owner":"Hartmut Meins","email":"","linkedin":"https://www.linkedin.com/in/hartmut-meins-967391159","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"820","name":"REES CATTERMOLE","units":"33","addrs":"33","counties":"Charlotte","cities":"ENGLEWOOD, PORT CHARLOTTE, ROTONDA WEST, ROTONDA WESTROTONDA, ROTONDA WESTROTONDA ","phone":"9416275960","score":66.3,"owner":"Cattermole, Rees C, Owner","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"566","name":"COLOCADA, INC","units":"47","addrs":"28","counties":"Monroe","cities":"KEY WEST, KEY WEST ","phone":"3059169020","score":66.0,"owner":"Rick Haskins","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"778","name":"KARA ALTICE-MONTES","units":"35","addrs":"34","counties":"Sarasota","cities":"SARASOTA, SARASOTA ","phone":"941-349-9580","score":66.0,"owner":"Kara Altice Montes","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"913","name":"PASTERMACK MANAGEMENT GROUP","units":"29","addrs":"24","counties":"Brevard","cities":"CAPE CANAVERAL, COCOA BEACH, COCOA BEACH , MERRITT ISLAND, SATELLITE BEACH","phone":"3213906200","score":65.8,"owner":"Registered Agents Inc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"809","name":"GULF STYLE RENTALS","units":"33","addrs":"30","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"","score":65.7,"owner":"Stanton Ingram","email":"","linkedin":"https://www.linkedin.com/in/stanton-ingram-15785470","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"993","name":"MHMH LLC","units":"26","addrs":"21","counties":"Hillsborough","cities":"BRANDON, PLANT CITY, TAMPA, TEMPLE TERRACE","phone":"8139389580","score":65.7,"owner":"Matthew A Hege","email":"","linkedin":"https://www.linkedin.com/in/matthew-hege-fra-ra-85320a290","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"848","name":"VAN DE BOE LISA","units":"31","addrs":"31","counties":"Citrus","cities":"CRYSTAL RIVER, LECANTO","phone":"352.634.0129","score":65.5,"owner":"Lisa Van","email":"Directory@UAlberta.ca","linkedin":"https://www.linkedin.com/in/lisa-vandeboe-3a36b09","website":"","notes":"Missing: Website","batch":6},{"rank":"853","name":"NISBET AMANDA","units":"31","addrs":"31","counties":"Osceola","cities":"KISSIMMEE","phone":"407-605-5865","score":65.5,"owner":"Katie Nisbet","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"878","name":"PAUL MELVIN","units":"30","addrs":"30","counties":"Polk","cities":"DAVENPORT","phone":"407 809 4690","score":65.1,"owner":"Paul R Melvin","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"780","name":"O'BRIEN KIMBERLEE A","units":"35","addrs":"33","counties":"Lee","cities":"CAPTIVA, SANIBEL","phone":"7735320532","score":64.9,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":6},{"rank":"579","name":"AYP LLC","units":"46","addrs":"16","counties":"Broward, Dade, Osceola","cities":"HOLLYWOOD, KISSIMMEE, SUNNY ISLES BEACH","phone":"3059440744","score":64.7,"owner":"Hernan H Vergara","email":"","linkedin":"https://www.linkedin.com/in/hernan-vergara-511b7641","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"906","name":"WHITE ROSE VILLAS","units":"29","addrs":"29","counties":"Polk","cities":"DAVENPORT","phone":"4076055865","score":64.7,"owner":"Amanda Nisbet","email":"","linkedin":"https://www.linkedin.com/in/amanda-nisbet-7b86462a","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"917","name":"MAJESTIC SUN CO VACASA","units":"29","addrs":"29","counties":"Walton","cities":"MIRAMAR BEACH","phone":"","score":64.7,"owner":"Amy Bornmann","email":"","linkedin":"https://www.linkedin.com/in/amy-bornmann-4b75515","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"928","name":"PATRICIA STANLEY","units":"28","addrs":"28","counties":"Monroe","cities":"ISLAMORADA, KEY LARGO, TAVERNIER","phone":"305-664-3333","score":64.2,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":6},{"rank":"834","name":"COASTLINE VACATION RENTALS","units":"32","addrs":"32","counties":"Gulf","cities":"CAPE SAN BLAS, CAPE SAN BLAS , MEXICO BEACH, PORT SAINT JOE","phone":"","score":63.9,"owner":"Elizabeth R Bryk","email":"","linkedin":"https://www.linkedin.com/in/elizabeth-bryk-016469b6","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"996","name":"TURNER MICHAEL","units":"26","addrs":"23","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"407-618-3090","score":63.8,"owner":"Michael Turner","email":"","linkedin":"https://www.linkedin.com/in/michael-turner-5a078427","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"825","name":"CORNERSTONE PROPERTY GROUP INC","units":"32","addrs":"22","counties":"Broward","cities":"DEERFIELD BEACH, FORT LAUDERDALE, FORT LAUDERDALE , LAUDERDALE BY THE SE, OAKLAND PARK , POMPANO BEACH, POMPANO BEACH ","phone":"9547340791","score":63.4,"owner":"Llc Cornerstone Venture Group","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"839","name":"EMERALD COAST PM DESTIN, LLC","units":"32","addrs":"18","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"850-777-3005","score":63.4,"owner":"Frt Holdings Corp","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"995","name":"PARENT KATTY","units":"26","addrs":"26","counties":"Lake","cities":"CLERMONT","phone":"352-978-6255","score":63.4,"owner":"Allison L Schild","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"1006","name":"PELICAN BEACH C/O VACASA","units":"26","addrs":"26","counties":"Okaloosa","cities":"DESTIN","phone":"863-280-5942","score":63.4,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":6},{"rank":"681","name":"STEVE LOVELACE LLC","units":"40","addrs":"34","counties":"Bay","cities":"1022, PANAMA CITY BEACH","phone":"","score":63.2,"owner":"Steven Lovelace","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"1033","name":"SUNSPOT REALTY","units":"25","addrs":"20","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"(850)234-7151","score":63.0,"owner":"Christopher James Cahoon","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"850","name":"DIGHTON TONY AND JESSICA","units":"31","addrs":"29","counties":"Volusia","cities":"DAYTONA BCH SHORES, DAYTONA BEACH, DAYTONA BEACH SHORES, ORMOND BCH","phone":"407-670-4712","score":62.9,"owner":"Jessica Dighton","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"968","name":"K & L INTERNATIONAL SERVICES","units":"27","addrs":"27","counties":"Lake, Osceola, Polk","cities":"CLERMONT, DAVENPORT, HAINES CITY, KISSIMMEE","phone":"","score":62.8,"owner":"Kieran O'Brien","email":"","linkedin":"https://www.linkedin.com/in/kieran-o%E2%80%99brien-5773871a3","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"556","name":"30 A COTTAGES AND CONCIERGE","units":"48","addrs":"48","counties":"Walton","cities":"INLET BEACH, ROSEMARY BEACH, SANTA ROSA BEACH, SEACREST, SEAGROVE BEACH, WATERSOUND BEACH","phone":"","score":62.6,"owner":"Brittany Marquis","email":"","linkedin":"https://www.linkedin.com/in/brittany-marquis-978a5026","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"1013","name":"PALM ISLAND STAYS LLC","units":"26","addrs":"19","counties":"Charlotte","cities":"PLACIDA","phone":"941-769-0313","score":62.6,"owner":"Charlene Mackin","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"707","name":"SHANK, ANN","units":"38","addrs":"37","counties":"Bay, Walton","cities":"PANAMA CITY BEACH, ROSEMARY BEACH, SANTA ROSA BEACH","phone":"","score":62.4,"owner":"Ann Shank","email":"","linkedin":"https://www.linkedin.com/in/ann-shank-79b0597","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"992","name":"MANAGED BY SHERPAS","units":"26","addrs":"22","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"9258907567","score":62.3,"owner":"Vacation Gear Enterprises Llc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"627","name":"HELLO SUNSHINE VACATION RENTALS","units":"42","addrs":"25","counties":"Pinellas","cities":"CLEARWATER BEACH , INDIAN ROCKS BEACH, INDIAN SHORES, INDIAN SHORES ","phone":"8138124696","score":61.9,"owner":"Lindsey I Warpinski","email":"","linkedin":"https://www.linkedin.com/in/lindsey-warpinski","website":"","notes":"Missing: Website, Email","batch":6},{"rank":"987","name":"SHOREHOUSE MANAGEMENT, LLC","units":"26","addrs":"13","counties":"Dade","cities":"MIAMI","phone":"5612713175","score":61.4,"owner":"Cory E Friedman","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":6},{"rank":"598","name":"ITRIP VACATIONS","units":"45","addrs":"45","counties":"Lee","cities":"BOKEELIA, BONITA SPRINGS, CAPE CORAL, CAPE CORAL , FORT MYERS, FORT MYERS BEACH, MATLACHA","phone":"","score":61.3,"owner":"Vivian Alfred","email":"","linkedin":"https://www.linkedin.com/in/vivian-alfred-realtor","website":"https://www.itrip.net/property-management/sarasota-bradenton","notes":"Missing: Email","batch":7},{"rank":"645","name":"MOCK MANAGEMENT LLC","units":"41","addrs":"14","counties":"Nassau","cities":"FERNANDINA BEACH","phone":"904.945.3887","score":61.3,"owner":"Elisha Mock","email":"","linkedin":"https://www.linkedin.com/in/elisha-mock","website":"https://www.allpropertymanagement.com/resources/property-management-laws/florida/#:~:text=YES.,rentals%20and%20leases%20for%20others.","notes":"Missing: Email","batch":7},{"rank":"741","name":"FLORIDA KEYS VACATION RENTALS","units":"36","addrs":"23","counties":"Monroe","cities":"ISLAMORADA, KEY LARGO, KEY WEST, MARATHON, SUMMERLAND KEY, TAVERNIER","phone":"(305)743-5181","score":61.1,"owner":"Brian C Schmitt","email":"","linkedin":"https://www.linkedin.com/in/brian-c-schmitt","website":"https://rentalsfloridakeys.com/","notes":"Missing: Email","batch":7},{"rank":"715","name":"MY FLORIDA VACATION RENTALS, LLC","units":"38","addrs":"9","counties":"Collier, Lee","cities":"BONITA SPRINGS, FORT MYERS BEACH, NAPLES","phone":"2398989391","score":60.9,"owner":"Robert Alan Neitzke Rev Trust Dtd 9-21-12","email":"","linkedin":"https://www.linkedin.com/in/robert-neitzke-448a22b8","website":"https://bisprofiles.com/fl/my-florida-vacation-rentals-l18000251415","notes":"Missing: Email","batch":7},{"rank":"924","name":"TEN HAAF BEN","units":"29","addrs":"26","counties":"Manatee","cities":"ANNA MARIA, BRADENTON BEACH, HOLMES BEACH","phone":"941.782.8152","score":60.5,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":7},{"rank":"835","name":"GULF COAST VACATION BY OWNER","units":"32","addrs":"21","counties":"Okaloosa","cities":"DESTIN, DESTIN ","phone":"8503771559","score":60.2,"owner":"Joseph D Lemke","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"804","name":"DE LIMA ROGER F","units":"33","addrs":"32","counties":"Osceola, Polk","cities":"CHAMPIONS GATE, DAVENPORT, KISSIMME, KISSIMMEE","phone":"","score":60.1,"owner":"Roger Lima","email":"","linkedin":"https://www.linkedin.com/in/roger-lima-6469798","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"1014","name":"MARCO ISLAND VACATION LODGING CORPORATION","units":"26","addrs":"25","counties":"Collier","cities":"MARCO ISLAND, NAPLES","phone":"","score":59.9,"owner":"Sean M Duggan","email":"","linkedin":"https://www.linkedin.com/in/sean-m-duggan","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"734","name":"JWB PROPERTY MANAGEMENT","units":"37","addrs":"22","counties":"Duval","cities":"JACKSONVILLE, JACKSONVILLE , JACKSONVILLE BEACH","phone":"9047557777","score":59.8,"owner":"Mckillop Law Firm","email":"","linkedin":"https://www.linkedin.com/in/h-daniel-mckillop-91825b238","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"882","name":"UPKEY LLC","units":"30","addrs":"26","counties":"Alachua","cities":"ALACHUA, GAINESVILE, GAINESVILLE, GAINEVILLE, HIGH SPRINGS","phone":"","score":59.8,"owner":"Robert C Strampello","email":"","linkedin":"https://www.linkedin.com/in/robert-strampello-6966bb178","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"973","name":"DESTIN LUXURY RENTALS INC","units":"27","addrs":"12","counties":"Okaloosa","cities":"DESTIN, FT WALTON BEACH","phone":"850.837.4191","score":59.6,"owner":"Kathryn M Maples","email":"","linkedin":"https://www.linkedin.com/in/kathryn-maples-7b2322315","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"558","name":"DYER PROPERTY SERVICES LLC","units":"48","addrs":"14","counties":"Okaloosa, Walton","cities":"FT WALTON BEACH, MIRAMAR BEACH","phone":"770.883.0032","score":59.2,"owner":"Robert Mjr Dyer","email":"","linkedin":"https://www.linkedin.com/in/robert-dyer-986690111","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"660","name":"NOELBIS DIAZ PA","units":"40","addrs":"40","counties":"Dade","cities":"CUTLER BAY, CUTLER BAY , HIALEAH, HOMESTEAD, ISLAMORADA , MIAMI, MIAMI , MIAMI FL, MIAMI SPTRING, VIRGINIA GARDEN ","phone":"","score":59.2,"owner":"Noelbis Diaz","email":"","linkedin":"https://www.linkedin.com/in/roberto-y-noelbis-diaz-1b076277","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"932","name":"ORLANDO HOST","units":"28","addrs":"28","counties":"Osceola, Polk","cities":"DAVENPORT, DAVEPORT, KISSIMMEE","phone":"","score":59.2,"owner":"Fl Orlando","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"945","name":"PARADISE ADDVENTURES LLC","units":"28","addrs":"14","counties":"Okaloosa, Walton","cities":"DESTIN, MIRAMAR BEACH","phone":"850.650.0088","score":59.2,"owner":"Larry Golson","email":"","linkedin":"https://www.linkedin.com/in/larry-golson-od-07458812","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"604","name":"SANGENITO ANTHONY","units":"44","addrs":"31","counties":"Osceola","cities":"KISSIMMEE, KISSIMMEE ","phone":"352.638.2299","score":59.1,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":7},{"rank":"915","name":"KEY CONCEPTS REALTY","units":"29","addrs":"19","counties":"Escambia","cities":"PENSACOLA, PENSACOLA ","phone":"(850)492-5462","score":58.9,"owner":"Sharon L Cook","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"964","name":"RED ROSE INVESTMENTS","units":"27","addrs":"27","counties":"Orange, Polk","cities":"DAVENPORT, DAVENPORT , ORLANDO","phone":"","score":58.8,"owner":"Wallace, Sally L, Mrs","email":"","linkedin":"https://www.linkedin.com/in/sally-wallace-a9858056","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"576","name":"MARCO ISLAND RENTAL PROP INC","units":"47","addrs":"10","counties":"Collier","cities":"GOODLAND, MARCO ISLAND, MARCO ISLANF","phone":"(941)394-8686","score":58.7,"owner":"Maria Schilke","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"1038","name":"ISLANDER PROPERTIES INC","units":"25","addrs":"11","counties":"Charlotte","cities":"PLACIDA","phone":"6972192","score":58.6,"owner":"Robin L Madden","email":"","linkedin":"https://www.linkedin.com/in/robin-madden-3989707","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"897","name":"ANNE ENTERPRISES LLC","units":"29","addrs":"18","counties":"Broward, Dade, Osceola","cities":"BAY HARBOR ISLANDS, FORT LAUDERDALE, KISSIMMEE, MIAMI, MIAMI BEACH","phone":"","score":58.5,"owner":"Eduardo Rodrigues Viana","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"1003","name":"RAIRVUE SERVICES LLC","units":"26","addrs":"13","counties":"Bay, Broward","cities":"FT LAUDERDALE, PANAMA CITY, PANAMA CITY BEACH","phone":"303-220-0183","score":58.4,"owner":"Drexel Owens","email":"","linkedin":"https://www.linkedin.com/in/drexel-owens-91859471","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"1020","name":"BRUNSWICK, LILLI & ADAMS, PAUL","units":"25","addrs":"19","counties":"Broward, Palm Beach","cities":"DEERFIELD BEACH, DELRAY BEACH, LIGHTHOUSE POINT, POMPANO BEACH","phone":"561-221-1466","score":58.4,"owner":"Lilli Brunswick","email":"","linkedin":"https://www.linkedin.com/in/lilli-brunswick-a908233ab","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"739","name":"SPLASH RESORT C/O VACASA","units":"37","addrs":"37","counties":"Bay","cities":"PANAMA CITY BEACH, PANAMA CITY BEACH ","phone":"","score":58.0,"owner":"Salvatore Albano","email":"","linkedin":"https://www.linkedin.com/in/salvatore-albano-78a686119","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"733","name":"SOVEREIGN & JACOBS PROPERTY MANAGEMENT COMPANIES LLC","units":"37","addrs":"11","counties":"St. Johns","cities":"SAINT AUGUSTINE, ST AUGUSTINE","phone":"904-461-5556","score":57.9,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":7},{"rank":"623","name":"M&M PROPERTY MANAGEMENT GROUP","units":"43","addrs":"25","counties":"Manatee, Sarasota","cities":"BRADENTON BEACH, BRADENTON BEACH , SARASOTA","phone":"","score":56.8,"owner":"Joseph Meszaros","email":"","linkedin":"https://www.linkedin.com/in/josephmeszaros","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"787","name":"GOLDEN REALTY & PROPERTY MANAGEMENT INC","units":"34","addrs":"10","counties":"St. Johns","cities":"SAINT AUGUSTINE, ST AUGUSTINE, ST. AUGUSTINE","phone":"904.940.9990","score":56.5,"owner":"Marilyn G Golden","email":"","linkedin":"https://www.linkedin.com/in/marilyn-golden-b74a6b23","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"881","name":"COSY CASAS LLC","units":"30","addrs":"16","counties":"Orange","cities":"ORLANDO","phone":"407 965 5091","score":56.4,"owner":"Kris Hoeylaerts","email":"","linkedin":"https://www.linkedin.com/in/kris-hoeylaerts-5b4a2667","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"591","name":"NAVARRO HEIDI","units":"45","addrs":"39","counties":"Pinellas","cities":"BELLEAIR BEACH, BELLEAIR BEACH , CLEARWATER BEACH, INDIAN ROCKS BEACH, INDIAN SHORES, REDINGTON BEACH, REDINGTON SHORES, ST PETERSBURG","phone":"","score":56.0,"owner":"P.A. Luis F. Navarro","email":"","linkedin":"https://www.linkedin.com/in/luis-navarro-483132a3","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"563","name":"LELY DEVELOPMENT CORP","units":"48","addrs":"16","counties":"Collier","cities":"NAPLES","phone":"239-732-9920","score":55.9,"owner":"Joseph Boff","email":"","linkedin":"https://www.linkedin.com/in/joseph-boff-07108717","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"622","name":"SUN VILLAGE MANAGEMENT LLC","units":"43","addrs":"8","counties":"Lee","cities":"BONITA SPRINGS, ESTERO","phone":"239.390.8860","score":55.9,"owner":"Omer Dror","email":"","linkedin":"https://www.linkedin.com/in/omer-dror-351298123","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"888","name":"MAINSAIL CONDOMINIUMS BY VACASA","units":"30","addrs":"30","counties":"Walton","cities":"MIRAMAR BEACH","phone":"","score":55.1,"owner":"Michael Rodkey","email":"","linkedin":"https://www.linkedin.com/in/michael-rodkey-690926248","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"891","name":"SHORELINE RENTALS & MANAGEMENT","units":"30","addrs":"24","counties":"Bay","cities":"MEXICO BEACH, PANAMA CITY BEACH","phone":"","score":55.1,"owner":"Morgan Mullis","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"940","name":"VACATION-DAYTONA INC","units":"28","addrs":"9","counties":"Volusia","cities":"DAYTONA BEACH, DAYTONA BEACH ","phone":"630-927-6669","score":55.1,"owner":"Dakota Green","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"947","name":"DESTIN-VESTMENTS 3 INC","units":"28","addrs":"11","counties":"Okaloosa, Walton","cities":"DESTIN, FORT WALTON BEACH, MIRAMAR BEACH","phone":"7577491284","score":55.0,"owner":"Matthew R Reich","email":"","linkedin":"https://www.linkedin.com/in/matthew-reich-755a1876","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"594","name":"VACATION RENTAL PROS MANAGEMENT LLC","units":"45","addrs":"17","counties":"Okaloosa","cities":"DESTIN, DESTIN ","phone":"","score":54.4,"owner":"Registered Agents Inc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"829","name":"LD&A REALTY LLC","units":"32","addrs":"4","counties":"Osceola, Polk","cities":"DAVENPORT, KISSIMMEE","phone":"4078289090","score":53.9,"owner":"Sandra Hernandez","email":"","linkedin":"https://www.linkedin.com/in/sandra-hernandez-81a4a08","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"980","name":"CHURCHILL PROPERTY SERVICES","units":"27","addrs":"27","counties":"Lee","cities":"CAPE CORAL, FORT MYERS, FORT MYERS BEACH","phone":"","score":53.8,"owner":"Neil Hastie","email":"","linkedin":"https://www.linkedin.com/in/neil-hastie-a94640","website":"https://churchillpropertyservices.com/","notes":"Missing: Email","batch":7},{"rank":"864","name":"VACATIONS PERFECTED, INC","units":"31","addrs":"14","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"8444782972","score":53.6,"owner":"Po Box 9916","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"955","name":"FREEWHEELER VACATIONS INC","units":"27","addrs":"20","counties":"Monroe","cities":"ISLAMORADA","phone":"","score":53.5,"owner":"Alexa L Wheeler","email":"","linkedin":"https://www.linkedin.com/in/alexa-wheeler-b1b572b","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"764","name":"WATERMARK REALTY INC","units":"36","addrs":"7","counties":"Collier","cities":"MARCO ISLAND","phone":"239-642-5400","score":53.4,"owner":"C T Corporation System","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"685","name":"FORT MYERS BEACH VACATION RENTALS, LLC","units":"40","addrs":"6","counties":"Lee","cities":"CAPE CORAL, FORT MYERS, FORT MYERS BEACH","phone":"2398392182","score":53.2,"owner":"Deborah J Mazzuca","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"766","name":"UPPER KEYS RENTALS INC","units":"35","addrs":"7","counties":"Monroe","cities":"KEY LARGO, TAVERNIER","phone":"3058509350","score":53.2,"owner":"Julie Johnson","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"811","name":"ANELIYAS RENTALS LLC","units":"33","addrs":"7","counties":"Bay","cities":"PANA CITY BEACH, PANAMA  CITY BEACH, PANAMA CITY BEACH","phone":"970-691-0251","score":52.8,"owner":"Mihail I Stoyanov","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"944","name":"KRISTI L BENNETT","units":"28","addrs":"20","counties":"Nassau","cities":"AMELIA ISLAND, FENANDINA BEACH, FERNANDINA BEACH, FERNANDINA BEACH ","phone":"904-753-0187","score":52.8,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":7},{"rank":"682","name":"WHISPERING SEAS BEACH RENTALS","units":"40","addrs":"15","counties":"Bay","cities":"P C BEACH, PANAMA CITY BEACH, PANAMA CITY BEACH ","phone":"8507081429","score":52.2,"owner":"David R Mcnear","email":"","linkedin":"https://www.linkedin.com/in/david-mcnear-7224903","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"743","name":"PINNACLE CHOICE PROPERTIES LLC","units":"36","addrs":"6","counties":"Monroe","cities":"ISLAMORADA, KEY LARGO, TAVERNIER","phone":"3053936378","score":52.2,"owner":"Largo Miller","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":7},{"rank":"1008","name":"3D BEACH RENTALS, LLC","units":"26","addrs":"7","counties":"Walton","cities":"MIRAMAR BEACH","phone":"504-729-8602","score":52.2,"owner":"Peter G Evans","email":"","linkedin":"https://www.linkedin.com/in/peter-evans-9464052","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"1034","name":"DESTIN FL RENTALS LLC","units":"25","addrs":"7","counties":"Walton","cities":"MIRAMAR BEACH","phone":"850.650.5524","score":52.2,"owner":"Rebecca Downs","email":"","linkedin":"https://www.linkedin.com/in/rebeccakylerdowns","website":"","notes":"Missing: Website, Email","batch":7},{"rank":"786","name":"OCEAN PROPERTIES AND MANAGEMENT INC","units":"34","addrs":"6","counties":"Volusia","cities":"NEW SMYRNA BEACH","phone":"386-428-0513","score":51.8,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":7},{"rank":"578","name":"TRUMAN ANNEX REAL ESTATE CO","units":"46","addrs":"2","counties":"Monroe","cities":"KEY WEST","phone":"305-296-7175","score":51.5,"owner":"Behmke, Michael Richard, President","email":"","linkedin":"","website":"https://www.compass-realty.com/truman-annex-rentals/#:~:text=The%20area%20is%20a%20quaint,also%20within%20the%20Truman%20Annex.","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"616","name":"URBAN SELECT REALTY, INC","units":"43","addrs":"14","counties":"Broward","cities":"HOLLYWOOD","phone":"","score":51.5,"owner":"Jose Miori","email":"","linkedin":"https://www.linkedin.com/in/miori","website":"https://www.apmhelp.com/blog/property-management-licensing-requirements-florida#:~:text=Unlike%20many%20other%20states%2C%20Florida,within%20the%20state's%20legal%20framework.","notes":"Missing: Email","batch":8},{"rank":"635","name":"LATITUDE30 LLC","units":"42","addrs":"22","counties":"St. Johns","cities":"ST AUGUSTINE, ST. AUGUSTINE","phone":"","score":51.0,"owner":"Anna L Pras","email":"","linkedin":"","website":"https://www.latitude30vacations.com/","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"798","name":"KL FLORIDA, LLC","units":"33","addrs":"8","counties":"Broward, Dade","cities":"HOLLYWOOD, MIAMI","phone":"6502298455","score":51.0,"owner":"Won Lee","email":"","linkedin":"https://www.linkedin.com/in/won-lee-b26924b8","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"875","name":"BAY SUITES LLC","units":"30","addrs":"8","counties":"Broward, Dade","cities":"FORT LAUDERDALE, MIAMI, MIAMI ","phone":"6476691010","score":50.8,"owner":"Rakesh Sarkar","email":"","linkedin":"https://www.linkedin.com/in/rakesh-sarkar-063847267","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"608","name":"DESTIN REALTY INC","units":"44","addrs":"2","counties":"Okaloosa","cities":"DESTIN","phone":"(850)837-3985","score":50.7,"owner":"None","email":"","linkedin":"https://www.linkedin.com/in/none-noe-2613a6218","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"595","name":"BOOKBEACH.COM, LLC","units":"45","addrs":"10","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"7703546442","score":50.2,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":8},{"rank":"662","name":"HB MIAMI VACATIONS RENTALS LLC","units":"40","addrs":"3","counties":"Broward","cities":"HOLLYWOOD","phone":"786.282.5128","score":50.2,"owner":"Ricardo Schilkrut","email":"","linkedin":"https://www.linkedin.com/in/ricardo-schilkrut-66b4034","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"1029","name":"REINSTEIN DENISE","units":"25","addrs":"17","counties":"Orange","cities":"ORLANDO","phone":"303-220-0183","score":50.2,"owner":"Robin Contessa","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"1012","name":"ANNA MARIA ISLAND BEACH RENTALS INC","units":"26","addrs":"12","counties":"Manatee","cities":"BRADENTON BEACH","phone":"","score":49.9,"owner":"Peter A Peak","email":"","linkedin":"https://www.linkedin.com/in/peter-a-peak-9b9bab354","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"898","name":"A&Y PROPERTY MANAGEMENT CORP","units":"29","addrs":"5","counties":"Dade","cities":"MIAMI","phone":"7863671959","score":49.6,"owner":"Aylin Montero","email":"","linkedin":"https://www.linkedin.com/in/aylin-montero-5a0159123","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"686","name":"GULF COAST REALTY & MANAGEMENT, INC.","units":"40","addrs":"2","counties":"Lee","cities":"FORT MYERS BEACH, SANIBEL","phone":"9417821559","score":49.2,"owner":"Andrew Moore","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"736","name":"ANCHOR MANAGEMENT INC","units":"37","addrs":"3","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"(850)234-5245","score":49.2,"owner":"Thomas Jii Risalvato","email":"","linkedin":"https://www.linkedin.com/in/tom-risalvato-4067a717","website":"https://www.chamberofcommerce.com/business-directory/florida/panama-city-beach/condominium-rental-agency/2015834172-anchor-management-inc","notes":"Missing: Email","batch":8},{"rank":"711","name":"EPIQHOST","units":"38","addrs":"24","counties":"Bay, Walton","cities":"MIRAMAR BEACH, PANAMA CITY BEACH , SANTA ROSA BEACH, SANTA ROSA BEACH ","phone":"","score":48.7,"owner":"Michael Edwards","email":"","linkedin":"https://www.linkedin.com/in/drmichaeledwards","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"957","name":"BENICHAY BROTHERS LLC","units":"27","addrs":"10","counties":"Dade","cities":"MIAMI, MIAMI BEACH, MIAMI BEACH ","phone":"7862441933","score":48.6,"owner":"Eytan Benichay","email":"","linkedin":"https://www.linkedin.com/in/eytan-benichay-24b15311","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"1002","name":"BRICKER LEWIS","units":"26","addrs":"13","counties":"Okaloosa, Walton","cities":"DESTIN, FORT WALTON BEACH, FT WALTON BEACH, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"706.490.3992","score":48.4,"owner":"Reed Baker","email":"","linkedin":"https://www.linkedin.com/in/reed-baker","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"950","name":"JONES REAL ESTATE AND RENTALS, LLC","units":"28","addrs":"4","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"850 814-4548","score":48.0,"owner":"Janet R Jones","email":"","linkedin":"https://www.linkedin.com/in/janet-jones-36276a27","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"975","name":"N&L VENTURES","units":"27","addrs":"17","counties":"Okaloosa, Santa Rosa, Walton","cities":"DESTIN, MIRAMAR BEACH, SANTA ROSA BEACH","phone":"","score":48.0,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":8},{"rank":"680","name":"CUTE GULF VILLAS","units":"40","addrs":"28","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"","score":47.2,"owner":"Charles Percy","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"926","name":"GOVERNOR GROUP, LLC","units":"29","addrs":"9","counties":"Sarasota","cities":"SIESTA KEY","phone":"818-426-4509","score":47.1,"owner":"Demetrius D Governor","email":"","linkedin":"https://www.linkedin.com/in/demetrius-governor-30a3986","website":"https://www.allpropertymanagement.com/resources/property-management-laws/florida/#:~:text=YES.,rentals%20and%20leases%20for%20others.","notes":"Missing: Email","batch":8},{"rank":"919","name":"STERLING SANDS VACATION RENTALS, LLC","units":"29","addrs":"3","counties":"Okaloosa","cities":"DESTIN","phone":"850-424-7272","score":46.8,"owner":"Sterling Sands Condominium Owners Assn Inc","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"845","name":"THINK PROPERTIES LLC","units":"31","addrs":"2","counties":"Dade","cities":"MIAMI BEACH","phone":"516.606.0900","score":46.1,"owner":"Shawn Vardi","email":"","linkedin":"https://www.linkedin.com/in/shawn-vardi-13981b53","website":"https://www.kingfishervacations.net/florida-vacation-rental-property-statistics/#:~:text=The%20Florida%20vacation%20rental%20industry,a%207%25%20increase%20since%202019.","notes":"Missing: Email","batch":8},{"rank":"744","name":"MODERNO BAY HARBOR ONE INC","units":"36","addrs":"3","counties":"Broward, Dade","cities":"FORT LAUDERDALE, MIAMI BEACH","phone":"7866812569","score":45.9,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":8},{"rank":"1040","name":"MARCO ESCAPES, INC.","units":"25","addrs":"8","counties":"Collier","cities":"MARCO ISLAND","phone":"303-220-0183","score":45.8,"owner":"Jason J Byington","email":"","linkedin":"https://www.linkedin.com/in/jason-byington-68750522","website":"https://marcoescapes.com/","notes":"Missing: Email","batch":8},{"rank":"797","name":"MATSENKO, ZHANNA","units":"33","addrs":"20","counties":"Broward, Dade","cities":"HOLLYWOOD, SUNNY ISLES, SUNNY ISLES BEACH","phone":"","score":45.6,"owner":"","email":"","linkedin":"","website":"","notes":"Missing: Owner Name, LinkedIn, Website, Email","batch":8},{"rank":"921","name":"ST. JAMES BAY OPERATIONS LLC","units":"29","addrs":"4","counties":"Flagler, Franklin","cities":"CARRABELLE","phone":"2168325070","score":45.2,"owner":"Carol Bodnar","email":"","linkedin":"https://www.linkedin.com/in/carol-bodnar-3881969","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"537","name":"BELLOISE REAL ESTATE","units":"49","addrs":"5","counties":"Pinellas","cities":"CLEARWATER, CLEARWATER BEACH","phone":"7277091272","score":45.1,"owner":"Belloise, Salvatore, Iii","email":"","linkedin":"https://www.linkedin.com/in/salvatore-belloise-12115383","website":"https://belloiserealty.com/","notes":"Missing: Email","batch":8},{"rank":"571","name":"SONDER HOSPITALITY USA INC","units":"47","addrs":"2","counties":"Orange","cities":"ORLANDO","phone":"407-620-2011","score":43.9,"owner":"Corporation Service Company","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"918","name":"LEGACY MANAGEMENT COMPANY, LLC","units":"29","addrs":"8","counties":"Bay","cities":"PANAMA CITY, PANAMA CITY BEACH","phone":"","score":43.7,"owner":"Drew-Montez Clark","email":"","linkedin":"https://www.linkedin.com/in/drew-montez-clark-d-c-4022a38","website":"https://domusholmes.co.uk/blog/prime-property/the-rise-of-legacy-properties-securing-generational-wealth-through-prime-real-estate/#:~:text=What%20Is%20a%20Legacy%20Property,and%20long%2Dterm%20investment%20potential.","notes":"Missing: Email","batch":8},{"rank":"636","name":"MOUNTJOY PROPERTY GROUP LLC","units":"42","addrs":"14","counties":"Nassau","cities":"FERNANDINA BEACH","phone":"","score":43.4,"owner":"Matthew Mountjoy","email":"","linkedin":"https://www.linkedin.com/in/matthew-mountjoy-72535825","website":"https://barefootamelia.com/","notes":"Missing: Email","batch":8},{"rank":"859","name":"LANGESKOV INTERNATIONAL LLC","units":"31","addrs":"6","counties":"Bay","cities":"PANAMA CITY BEACH","phone":"303-220-0183","score":43.2,"owner":"Bill Pedersen","email":"","linkedin":"https://www.linkedin.com/in/bill-pedersen-15018718","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"628","name":"VISTANA PSL INC","units":"42","addrs":"3","counties":"St. Lucie","cities":"PORT ST LUCIE","phone":"4076906691","score":42.9,"owner":"Corporation Service Company","email":"","linkedin":"","website":"https://www.sec.gov/Archives/edgar/data/1524358/000152435826000010/a2025ex211xsubsidiarieslis.htm","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"860","name":"NAVARRE VACATION RENTALS LLC","units":"31","addrs":"7","counties":"Santa Rosa","cities":"NAVARRE","phone":"","score":42.5,"owner":"Creech, Dacien T, Mgr","email":"","linkedin":"https://www.linkedin.com/in/dacien-creech-88444014b","website":"https://navarrevacationrentals.com/","notes":"Missing: Email","batch":8},{"rank":"719","name":"ALL FLORIDA KEYS PROP MGMT INC","units":"37","addrs":"4","counties":"Monroe","cities":"KEY WEST","phone":"305-294-8877","score":42.3,"owner":"All Florida Keys Property Management","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"674","name":"CLARK JOHN","units":"40","addrs":"13","counties":"St. Johns","cities":"ST AUGUSTINE","phone":"904.679.5425","score":42.2,"owner":"Clark R. Johnson","email":"","linkedin":"","website":"https://www.newmanhospitality.com/experience-the-kentucky-derby-while-staying-in-our-jeffersonville-rentals/","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"700","name":"FLORIDA'S BEST ACCOMMODATIONS INC","units":"38","addrs":"3","counties":"Pinellas","cities":"INDIAN ROCKS BEACH, ST PETERSBURG","phone":"727-517-9404","score":41.6,"owner":"Graves, Larry W, Jr.","email":"","linkedin":"","website":"https://www.bringfido.com/lodging/969641","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"618","name":"VACATIA LIBERTE MANAGEMENT LLC","units":"43","addrs":"3","counties":"Pinellas","cities":"TREASURE ISLAND","phone":"","score":41.3,"owner":"Caroline Shin","email":"","linkedin":"","website":"https://www.libertemanagement.com/","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"690","name":"STERLING REEF CO VACASA","units":"39","addrs":"12","counties":"Bay","cities":"PANAMA CITY BEACH, PANAMA CITY BEACH ","phone":"","score":41.1,"owner":"Jessica Kelly","email":"","linkedin":"https://www.linkedin.com/in/jessica-kelly-621655b2","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"810","name":"EMERALD VIEW VACATIONS","units":"33","addrs":"8","counties":"Bay, Walton","cities":" PANAMA CITY BEACH, ALYS BEACH, PANAMA CITY BEACH, ROSEMARY BEACH","phone":"6783610881","score":41.0,"owner":"Daniel Paine","email":"","linkedin":"https://www.linkedin.com/in/daniel-paine-42959713b","website":"https://www.emeraldviewvacations.com/","notes":"Missing: Email","batch":8},{"rank":"702","name":"FRAHM LARAINE","units":"38","addrs":"21","counties":"Orange","cities":"ORLANDO","phone":"","score":40.5,"owner":"Steven Pdr Frahm","email":"","linkedin":"https://www.linkedin.com/in/steve-frahm-0291429","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"589","name":"OCEAN REEF CLUB INC","units":"45","addrs":"10","counties":"Monroe","cities":"KEY LARGO","phone":"","score":40.2,"owner":"Harper Jr. Sibley","email":"","linkedin":"","website":"https://www.reefrentals.com/","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"745","name":"TAHM GROUP, LLC","units":"36","addrs":"2","counties":"Dade","cities":"CORAL GABLES","phone":"3054484091","score":39.8,"owner":"Oscar Roger","email":"","linkedin":"https://www.linkedin.com/in/oscar-roger-89aa3018","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"803","name":"SEVEN DWARFS VACATIONS,INC","units":"33","addrs":"11","counties":"Osceola","cities":"KISSIMMEE","phone":"","score":39.7,"owner":"Linda Iris Alers","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"669","name":"JOHN KEITH SLATER PA","units":"40","addrs":"20","counties":"Pinellas","cities":"CLEARWATER BEACH, INDIAN ROCKS BEACH, MADEIRA BEACH, REDINGTON SHORES, ST PETE BEACH, TREASURE ISLAND","phone":"","score":39.2,"owner":"John Keith Slater","email":"","linkedin":"","website":"https://www.coastalhomeadvisors.com/meet-the-team/","notes":"Missing: LinkedIn, Email","batch":8},{"rank":"821","name":"ILDAR VENTURES LLC","units":"32","addrs":"2","counties":"Dade","cities":"MIAMI BEACH, SUNNY ISLES","phone":"585-613-5579","score":38.4,"owner":"Iskander Karimov","email":"","linkedin":"https://www.linkedin.com/in/ildar-karimov-66907b3b8","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"858","name":"DAVIDSON LILA","units":"31","addrs":"10","counties":"Escambia","cities":"GULF BREEZE, PENSACOLA BEACH","phone":"850-426-2303","score":38.4,"owner":"Larry W. Davidson","email":"","linkedin":"https://www.linkedin.com/in/larry-w-davidson-1828ba5a","website":"https://www.idcrawl.com/lila-davidson","notes":"Missing: Email","batch":8},{"rank":"939","name":"DAYTONA BEACHFRONT RENTALS LLC","units":"28","addrs":"4","counties":"Volusia","cities":"DAYTONA BEACH, DAYTONA BEACH SHORES","phone":"","score":38.0,"owner":"Christopher G Paul","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":8},{"rank":"1015","name":"NAUTILUS VACATIONS, LLC","units":"26","addrs":"2","counties":"Manatee","cities":"HOLMES BEACH","phone":"9417737613","score":36.5,"owner":"Lenna Dahlquist","email":"","linkedin":"https://www.linkedin.com/in/lenna-dahlquist-1595b819","website":"https://ivacationonline.com/Rentals/Rental_View.asp?PropertyID=2105","notes":"Missing: Email","batch":8},{"rank":"840","name":"SANDPIPER COVE REALTY LLC","units":"32","addrs":"2","counties":"Okaloosa","cities":"DESTIN","phone":"","score":36.4,"owner":"Heather E Vanderboom","email":"","linkedin":"https://www.linkedin.com/in/heather-vanderboom-a29a602a8","website":"https://sandpipercoverealtydestin.com/","notes":"Missing: Email","batch":8},{"rank":"615","name":"HAINES MATTHEW A","units":"43","addrs":"17","counties":"Broward","cities":"FORT LAUDERDALE, FT LAUDERDALE","phone":"","score":36.3,"owner":"Matthew Haines","email":"","linkedin":"https://www.linkedin.com/in/matthew-haines-78894420b","website":"","notes":"Missing: Website, Email","batch":8},{"rank":"959","name":"MIA LUXE PROPERTIES","units":"27","addrs":"9","counties":"Dade","cities":"COCONUT GROVE, MIAMI","phone":"","score":35.2,"owner":"Ramon Nuila","email":"","linkedin":"https://www.linkedin.com/in/ramon-nuila","website":"https://mialuxeproperties.com/","notes":"Missing: Email","batch":9},{"rank":"794","name":"VACASA, LLC.","units":"34","addrs":"7","counties":"Bay","cities":"PANAMA CITY BEACH, PANAMA CITY BEACH ","phone":"","score":35.0,"owner":"Steve Schwab","email":"","linkedin":"","website":"https://www.vacasa.ca/","notes":"Missing: LinkedIn, Email","batch":9},{"rank":"567","name":"VOYAGER BCH CLUB ASSN","units":"47","addrs":"2","counties":"Pinellas","cities":"TREASURE ISLAND","phone":"(813)360-5529","score":33.9,"owner":"Skip Stone","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":9},{"rank":"873","name":"FREEWHEELER VACATIONS","units":"30","addrs":"14","counties":"Monroe","cities":"ISLAMORADA, LONG KEY, TAVERNIER","phone":"","score":33.8,"owner":"Alexa L Wheeler","email":"","linkedin":"https://www.linkedin.com/in/alexa-wheeler-b1b572b","website":"https://www.freewheelervacations.com/","notes":"Missing: Email","batch":9},{"rank":"642","name":"AVANTI STAY","units":"41","addrs":"3","counties":"Dade","cities":"MIAMI","phone":"7865270517","score":32.6,"owner":"Gustavo Galvez","email":"","linkedin":"https://www.linkedin.com/in/gustavo-galvez-6b1119a0","website":"https://avantstay.com/blog/airbnb-vs-hotel-vs-professionally-managed-vacation-rental/#:~:text=Professionally%20managed%20vacation%20rentals%20like,widely%20from%20listing%20to%20listing.","notes":"Missing: Email","batch":9},{"rank":"629","name":"ALIZADE, IVAN","units":"42","addrs":"2","counties":"Osceola","cities":"KISSIMMEE","phone":"7862381656","score":32.0,"owner":"Ivan Alizade","email":"","linkedin":"https://www.linkedin.com/in/ivan-alizade-48731b","website":"","notes":"Missing: Website, Email","batch":9},{"rank":"823","name":"SAMIR BENKIRANE","units":"32","addrs":"4","counties":"Dade","cities":"MIAMI","phone":"5712166259","score":30.9,"owner":"Samir Benrhanem","email":"","linkedin":"https://www.linkedin.com/in/samir-benrhanem-ba54b7159","website":"https://www.hellodata.ai/help-articles/what-are-the-biggest-short-term-rental-property-management-companies#:~:text=Some%20of%20the%20largest%20short,structure%20and%20flexible%20management%20options.","notes":"Missing: Email","batch":9},{"rank":"877","name":"2JALS USA CORP","units":"30","addrs":"4","counties":"Broward","cities":"HOLLYWOOD","phone":"","score":30.4,"owner":"Ana Gonzalez Bosquiazzo","email":"","linkedin":"","website":"https://www.allpropertymanagement.com/resources/property-management-laws/florida/#:~:text=YES.,rentals%20and%20leases%20for%20others.","notes":"Missing: LinkedIn, Email","batch":9},{"rank":"960","name":"JRESTEPOX2 INC","units":"27","addrs":"4","counties":"Dade","cities":"MIAMI BEACH","phone":"","score":29.8,"owner":"Jason Stephens","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":9},{"rank":"889","name":"BEACH HOUSE BY VACASA, LLC","units":"30","addrs":"3","counties":"Walton","cities":"MIRAMAR BEACH, MIRAMAR BEACH ","phone":"","score":29.1,"owner":"Mikhail A Jezdan","email":"","linkedin":"","website":"","notes":"Missing: LinkedIn, Website, Email","batch":9},{"rank":"801","name":"COCONUT PALMS BCH RESORT OWNER","units":"33","addrs":"2","counties":"Volusia","cities":"NEW SMYRNA BEACH","phone":"386.409.8432","score":28.8,"owner":"Michael Yanochko","email":"","linkedin":"https://www.linkedin.com/in/michael-yanochko-b44a3773","website":"","notes":"Missing: Website, Email","batch":9},{"rank":"844","name":"KRISTINE HALL","units":"31","addrs":"2","counties":"Dade","cities":"MIAMI BEACH","phone":"786.358.5580","score":28.1,"owner":"Kristine Hall","email":"","linkedin":"https://www.linkedin.com/in/kristine-hall-a220a3154","website":"https://www.luxuryrentalsmiamibeach.com/about/","notes":"Missing: Email","batch":9}];
+
+// State
+let state = {
+  search: '',
+  batch: '',
+  county: '',
+  has: '',
+  sort: 'score',
+  sortDir: 'desc'
+};
+
+// Populate counties
+const counties = new Set();
+LEADS.forEach(l => {
+  (l.counties || '').split(',').forEach(c => {
+    const trimmed = c.trim();
+    if (trimmed) counties.add(trimmed);
+  });
+});
+const countySelect = document.getElementById('f-county');
+[...counties].sort().forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c;
+  opt.textContent = c;
+  countySelect.appendChild(opt);
+});
+
+function truncateUrl(url) {
+  if (!url) return '';
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getFiltered() {
+  const q = state.search.toLowerCase().trim();
+  let filtered = LEADS.filter(l => {
+    if (q && !(l.name.toLowerCase().includes(q) || (l.owner || '').toLowerCase().includes(q))) return false;
+    if (state.batch && l.batch != parseInt(state.batch)) return false;
+    if (state.county && !((l.counties || '').includes(state.county))) return false;
+    if (state.has === 'linkedin' && !l.linkedin) return false;
+    if (state.has === 'website' && !l.website) return false;
+    if (state.has === 'email' && !l.email) return false;
+    if (state.has === 'complete' && !(l.owner && l.linkedin && l.website && l.email)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let av = a[state.sort], bv = b[state.sort];
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return state.sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return state.sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return filtered;
+}
+
+function render() {
+  const filtered = getFiltered();
+
+  // Update count (only the text span, leave the export buttons intact)
+  const countEl = document.querySelector('.result-count-text');
+  if (countEl) {
+    countEl.innerHTML = `Showing <span class="hi">${filtered.length}</span> of <span class="hi">${LEADS.length}</span> leads`;
+  }
+
+  // Update export button states
+  const liCount = filtered.filter(l => l.linkedin).length;
+  const fullBtn = document.getElementById('exportFull');
+  const dripBtn = document.getElementById('exportDripify');
+  if (fullBtn) {
+    fullBtn.disabled = filtered.length === 0;
+    fullBtn.innerHTML = fullBtn.innerHTML.replace(/Export CSV.*$/, `Export CSV · ${filtered.length}`);
+  }
+  if (dripBtn) {
+    dripBtn.disabled = liCount === 0;
+    dripBtn.innerHTML = dripBtn.innerHTML.replace(/Export for Dripify.*$/, `Export for Dripify · ${liCount}`);
+  }
+
+  // Update sort arrows
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sorted');
+    th.removeAttribute('data-arrow');
+  });
+  const activeTh = document.querySelector(`th[data-sort="${state.sort}"]`);
+  if (activeTh) {
+    activeTh.classList.add('sorted');
+    activeTh.setAttribute('data-arrow', state.sortDir === 'asc' ? '↑' : '↓');
+  }
+
+  // Render rows
+  const tbody = document.getElementById('tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="no-results">No leads match these filters.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((l, i) => {
+    const batchClass = l.batch === 1 ? 'p1' : '';
+    const linkedinDisplay = l.linkedin
+      ? `<a class="c-link" href="${escapeHtml(l.linkedin)}" target="_blank" rel="noopener">${escapeHtml(truncateUrl(l.linkedin))}</a>`
+      : `<span class="c-link empty">—</span>`;
+    const websiteDisplay = l.website
+      ? `<a class="c-link" href="${escapeHtml(l.website)}" target="_blank" rel="noopener">${escapeHtml(truncateUrl(l.website))}</a>`
+      : `<span class="c-link empty">—</span>`;
+    const emailDisplay = l.email
+      ? `<a class="c-link" href="mailto:${escapeHtml(l.email)}">${escapeHtml(l.email)}</a>`
+      : `<span class="c-link empty">—</span>`;
+    const ownerDisplay = l.owner
+      ? `<span class="c-owner">${escapeHtml(l.owner)}</span>`
+      : `<span class="c-owner empty">—</span>`;
+    const phoneDisplay = l.phone
+      ? `<span class="c-link" style="color: var(--dune); opacity: 0.7;">${escapeHtml(l.phone)}</span>`
+      : `<span class="c-link empty">—</span>`;
+
+    return `<tr style="animation-delay: ${Math.min(i * 8, 400)}ms">
+      <td class="c-score">${l.score.toFixed(1)}</td>
+      <td><span class="c-batch ${batchClass}">batch_${String(l.batch).padStart(2, '0')}</span></td>
+      <td>
+        <div class="c-name">${escapeHtml(l.name)}</div>
+        <div class="c-meta">RANK #${l.rank}</div>
+      </td>
+      <td><span class="c-owner">${l.units} <span style="opacity: 0.5; font-family: var(--mono); font-size: 11px;">· ${l.addrs} ADDR</span></span></td>
+      <td class="c-counties">${escapeHtml(l.counties)}</td>
+      <td>${ownerDisplay}</td>
+      <td>${linkedinDisplay}</td>
+      <td>${websiteDisplay}</td>
+      <td>${emailDisplay}</td>
+      <td>${phoneDisplay}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Bind filters
+document.getElementById('f-search').addEventListener('input', (e) => {
+  state.search = e.target.value;
+  render();
+});
+document.getElementById('f-batch').addEventListener('change', (e) => {
+  state.batch = e.target.value;
+  render();
+});
+document.getElementById('f-county').addEventListener('change', (e) => {
+  state.county = e.target.value;
+  render();
+});
+document.getElementById('f-has').addEventListener('change', (e) => {
+  state.has = e.target.value;
+  render();
+});
+document.getElementById('f-reset').addEventListener('click', () => {
+  state.search = '';
+  state.batch = '';
+  state.county = '';
+  state.has = '';
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-batch').value = '';
+  document.getElementById('f-county').value = '';
+  document.getElementById('f-has').value = '';
+  render();
+});
+
+// Sorting
+document.querySelectorAll('th').forEach(th => {
+  th.addEventListener('click', () => {
+    const sort = th.dataset.sort;
+    if (state.sort === sort) {
+      state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.sort = sort;
+      state.sortDir = sort === 'score' || sort === 'units' ? 'desc' : 'asc';
+    }
+    render();
+  });
+});
+
+// ─── CSV export helpers ───
+function csvCell(v) {
+  if (v == null) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function toCSV(rows, columns) {
+  const header = columns.map(c => csvCell(c.label)).join(',');
+  const body = rows.map(r => columns.map(c => csvCell(c.get(r))).join(',')).join('\n');
+  return header + '\n' + body + '\n';
+}
+function downloadCSV(content, filename) {
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+function splitName(full) {
+  if (!full) return { first: '', last: '' };
+  const parts = full.trim().split(/\s+/);
+  if (parts.length === 1) return { first: parts[0], last: '' };
+  return { first: parts[0], last: parts.slice(1).join(' ') };
+}
+function primaryMarket(lead) {
+  // Prefer first city; fall back to first county
+  if (lead.cities) {
+    const city = lead.cities.split(',')[0].trim();
+    if (city) return city.replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  }
+  if (lead.counties) {
+    const c = lead.counties.split(',')[0].trim();
+    return c ? c + ' County, FL' : '';
+  }
+  return '';
+}
+function filterSuffix() {
+  const parts = [];
+  if (state.batch) parts.push('batch' + state.batch);
+  if (state.county) parts.push(state.county.toLowerCase().replace(/\s+/g, '-'));
+  if (state.has) parts.push(state.has);
+  if (state.search) parts.push('search');
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  return (parts.length ? parts.join('-') + '_' : '') + ymd;
+}
+
+// Full export — everything the UI shows
+function exportFull() {
+  const rows = getFiltered();
+  if (rows.length === 0) return;
+  const columns = [
+    { label: 'Rank', get: r => r.rank },
+    { label: 'Batch', get: r => 'batch_' + String(r.batch).padStart(2, '0') },
+    { label: 'Score', get: r => r.score.toFixed(1) },
+    { label: 'Licensee Name', get: r => r.name },
+    { label: 'Total Units', get: r => r.units },
+    { label: 'Unique Addresses', get: r => r.addrs },
+    { label: 'Counties', get: r => r.counties },
+    { label: 'Cities Served', get: r => r.cities },
+    { label: 'Phone', get: r => r.phone },
+    { label: 'Owner Name', get: r => r.owner },
+    { label: 'Owner Email', get: r => r.email },
+    { label: 'Owner LinkedIn', get: r => r.linkedin },
+    { label: 'Website', get: r => r.website },
+    { label: 'Notes', get: r => r.notes },
+  ];
+  downloadCSV(toCSV(rows, columns), 'revwhisper_leads_' + filterSuffix() + '.csv');
+}
+
+// Dripify-ready export — LinkedIn drips only
+// Dripify accepts a CSV with LinkedIn profile URLs + custom fields for template substitution.
+// Required: Profile URL. Optional but useful for {{first_name}}, {{company_name}}, etc.
+function exportDripify() {
+  const rows = getFiltered().filter(r => r.linkedin);
+  if (rows.length === 0) return;
+
+  const columns = [
+    // Dripify import required / recognized columns
+    { label: 'Profile URL', get: r => r.linkedin },
+    { label: 'First Name', get: r => splitName(r.owner).first },
+    { label: 'Last Name', get: r => splitName(r.owner).last },
+    { label: 'Full Name', get: r => r.owner },
+    { label: 'Company Name', get: r => r.name },
+    { label: 'Position', get: r => 'Owner' },
+    { label: 'Location', get: r => primaryMarket(r) },
+    { label: 'Email', get: r => r.email },
+    { label: 'Phone', get: r => r.phone },
+    // Custom variables used by the RevWhisper LinkedIn drip templates
+    { label: 'company_name', get: r => r.name },
+    { label: 'first_name', get: r => splitName(r.owner).first },
+    { label: 'market_area', get: r => primaryMarket(r) },
+    { label: 'unit_count', get: r => r.units },
+    { label: 'counties', get: r => r.counties },
+    { label: 'website', get: r => r.website },
+    { label: 'score', get: r => r.score.toFixed(1) },
+  ];
+
+  downloadCSV(toCSV(rows, columns), 'dripify_import_' + filterSuffix() + '.csv');
+}
+
+document.getElementById('exportFull').addEventListener('click', exportFull);
+document.getElementById('exportDripify').addEventListener('click', exportDripify);
+
+// Initial render
+render();
+</script>
+
+</body>
+</html>
