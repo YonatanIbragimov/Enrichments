@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rev Whisper — Clean, Score &amp; Enrich</title>
+<style>
+  :root {
+    --ink:#1e1e1e; --dim:#555; --rule:#e3e3e3; --bg:#fdfdfb;
+    --accent:#4A6741; --accent-dark:#3a5334;
+    --warn:#b5651d; --err:#a33; --ok:#4A6741;
+    --code-bg:#f1efec;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;max-width:960px;margin:0 auto;padding:48px 32px 80px;color:var(--ink);background:var(--bg);line-height:1.6;font-size:16px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.3px}
+  h2{font-size:22px;margin:40px 0 14px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  h3{font-size:17px;margin:24px 0 10px}
+  p{margin:0 0 12px}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13.5px;background:var(--code-bg);padding:1px 6px;border-radius:3px}
+  .meta{color:var(--dim);font-size:15px;margin-bottom:32px}
+  .hidden{display:none!important}
+
+  .dropzone{
+    border:2px dashed #cfc9bf;border-radius:6px;padding:40px 24px;text-align:center;
+    background:#fff;cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .dropzone:hover,.dropzone.drag{border-color:var(--accent);background:#f4f1e9}
+  .dropzone strong{font-size:18px;display:block;margin-bottom:6px}
+  .dropzone .sub{color:var(--dim);font-size:14px}
+
+  .btn{
+    display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    font-weight:600;font-size:14px;padding:10px 18px;border-radius:3px;letter-spacing:.3px;
+    border:none;cursor:pointer;font-family:inherit;
+  }
+  .btn:hover{background:var(--accent-dark)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .btn.secondary:hover{background:#f4f1e9}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:16px 0}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+  .stat{background:#fff;border:1px solid var(--rule);border-left:3px solid var(--accent);padding:14px 16px;border-radius:2px}
+  .stat .n{font-size:26px;font-weight:600;letter-spacing:-.5px}
+  .stat .l{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{background:#f6f5f2;font-weight:600}
+
+  .note{background:#f6f3ec;border-left:3px solid #d9cfa8;padding:12px 16px;color:var(--dim);margin:14px 0;border-radius:2px;font-size:14px}
+  .note.warn{background:#fdf4ea;border-left-color:var(--warn)}
+  .note.err{background:#fbecec;border-left-color:var(--err)}
+
+  .progress-wrap{margin:16px 0;background:#fff;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+  .progress-bar{height:10px;background:var(--accent);width:0;transition:width .3s}
+  .progress-text{padding:12px 14px;font-size:14px;color:var(--dim);border-top:1px solid var(--rule)}
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .status-dot.ok{background:var(--ok)}
+  .status-dot.err{background:var(--err)}
+  .status-dot.idle{background:#aaa}
+
+  pre.log{background:#1e1e1e;color:#ddd;padding:16px;border-radius:3px;max-height:260px;overflow:auto;font-size:12px;line-height:1.5;font-family:"SF Mono",Menlo,monospace}
+</style>
+</head>
+<body>
+
+<h1>Clean, Score &amp; Enrich</h1>
+<p class="meta">Upload a raw Florida STR licensee CSV → clean + score in your browser → optionally hand off to the local enrichment listener.</p>
+
+<!-- ─── Bridge status ─── -->
+<div class="note" id="bridgeStatus">
+  <span class="status-dot idle" id="bridgeDot"></span>
+  <span id="bridgeText">Checking for enrichment bridge…</span>
+</div>
+
+<!-- ─── Step 1: Upload ─── -->
+<h2>1. Upload CSV</h2>
+<p>Expected columns: <code>Rank, Licensee Name, Total Units, Unique Addresses, Counties, Cities Served, Phone</code>. Extra columns are ignored. A <code>Score</code> column will be added; blank <code>Owner Name / Owner Email / Owner LinkedIn / Website / Notes</code> columns will be appended.</p>
+
+<label class="dropzone" id="drop">
+  <input type="file" accept=".csv" id="file" hidden>
+  <strong>Drop CSV here or click to pick</strong>
+  <span class="sub">Nothing is uploaded — cleaning runs entirely in your browser.</span>
+</label>
+
+<!-- ─── Step 2: Clean + Score results ─── -->
+<div id="afterUpload" class="hidden">
+  <h2>2. Clean &amp; Score Results</h2>
+  <div class="stat-grid" id="stats"></div>
+
+  <div class="row">
+    <button class="btn" id="downloadScored">↓ Download scored CSV</button>
+    <button class="btn secondary" id="showRemoved">View removed rows</button>
+  </div>
+
+  <h3>Top 10 preview</h3>
+  <div id="preview"></div>
+
+  <div id="removedWrap" class="hidden">
+    <h3>Removed rows</h3>
+    <div id="removed"></div>
+  </div>
+</div>
+
+<!-- ─── Step 3: Enrich ─── -->
+<div id="enrichSection" class="hidden">
+  <h2>3. Enrich (optional)</h2>
+  <p>The extension will hand the scored CSV to your local listener. The listener kicks off <code>enrich_batch.py</code> in a persistent Chromium profile (logged-in Apollo/DDG/Sunbiz sessions survive across runs).</p>
+  <div class="row">
+    <button class="btn" id="startEnrich">▶ Start enrichment</button>
+    <span id="enrichHint" class="meta" style="margin:0"></span>
+  </div>
+
+  <div id="enrichProgress" class="hidden">
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+      <div class="progress-text" id="progressText">Starting…</div>
+    </div>
+    <div class="row">
+      <button class="btn secondary" id="toggleLog">Show live log</button>
+      <button class="btn" id="downloadEnriched" disabled>↓ Download enriched CSV</button>
+    </div>
+    <pre class="log hidden" id="logBox"></pre>
+  </div>
+</div>
+
+<script>
+/* ───────────────────────── CSV helpers (RFC 4180-ish) ───────────────────────── */
+function parseCSV(text) {
+  const rows = []; let row = []; let field = ""; let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else inQ = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c === "\r") { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  const headers = rows.shift() || [];
+  return rows.filter(r => r.some(x => x.length)).map(r => {
+    const o = {}; headers.forEach((h,i) => o[h] = (r[i] ?? "").trim()); return o;
+  });
+}
+
+function toCSV(rows, columns) {
+  const esc = v => {
+    const s = String(v ?? "");
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  const head = columns.map(esc).join(",");
+  const body = rows.map(r => columns.map(c => esc(r[c])).join(",")).join("\n");
+  return head + "\n" + body + "\n";
+}
+
+function download(filename, text) {
+  const blob = new Blob([text], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement("a"), {href:url, download:filename});
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ───────────────────────── Cleaning rules (port of ENRICHMENT_PROCESS.md) ───── */
+const ASSOC_PATTERNS = /\b(ASSOCIATION|ASSOC|ASN|CONDOMINIUM|CONDO|HOA|HOMEOWNER|TIMESHARE)\b/i;
+
+function cleanRow(r) {
+  const name = (r["Licensee Name"] || "").trim();
+  if (!name) return {keep:false, reason:"Blank licensee name"};
+  if (ASSOC_PATTERNS.test(name)) return {keep:false, reason:"Association/HOA/Condo/Timeshare"};
+  const uniq = parseInt(r["Unique Addresses"] || "0", 10);
+  if (uniq <= 1) return {keep:false, reason:"Single-building operator (Unique Addresses ≤ 1)"};
+  if (/^OWNER\.?$/i.test(name)) return {keep:false, reason:"Generic OWNER entry"};
+  return {keep:true};
+}
+
+/* ───────────────────────── Scoring (0–100, weighted) ────────────────────────── */
+function score(r) {
+  const units = parseInt(r["Total Units"] || "0", 10);
+  const uniq  = parseInt(r["Unique Addresses"] || "0", 10);
+  const countyStr = (r["Counties"] || "").trim();
+  const counties  = countyStr ? countyStr.split(",").map(s=>s.trim()).filter(Boolean).length : 0;
+  const phone = (r["Phone"] || "").trim();
+  const name  = (r["Licensee Name"] || "").toUpperCase();
+
+  // 1. Distributed portfolio ratio (40 pts)
+  const ratio = units > 0 ? Math.min(uniq / units, 1) : 0;
+  const sDist = +(ratio * 40).toFixed(2);
+
+  // 2. Total unit count (20 pts) — linear inside the 25-49 tier; caps at 20 for >=49
+  const sUnits = +(Math.max(0, Math.min(20, ((units - 25) / 24) * 10 + 10))).toFixed(2);
+
+  // 3. Multi-county presence (12 pts)
+  const sCounty = counties >= 3 ? 12 : counties === 2 ? 8 : counties === 1 ? 3 : 0;
+
+  // 4. Has phone (10 pts)
+  const sPhone = phone ? 10 : 0;
+
+  // 5. Business entity type (10 pts)
+  const sEntity = /\b(LLC|INC|CORP|LTD|LP|L\.?L\.?C\.?)\b/i.test(name) ? 10 : 0;
+
+  // 6. PM business keyword bonus (+8 pts, capped at 100)
+  const sKW = /\b(MANAGEMENT|REALTY|PROPERTIES|RENTALS|VACATION|REAL ESTATE)\b/i.test(name) ? 8 : 0;
+
+  const total = Math.min(100, +(sDist + sUnits + sCounty + sPhone + sEntity + sKW).toFixed(1));
+  return total;
+}
+
+/* ───────────────────────── State ────────────────────────────────────────────── */
+const OUT_COLUMNS = ["Rank","Licensee Name","Total Units","Unique Addresses","Counties","Cities Served","Phone","Score","Owner Name","Owner Email","Owner LinkedIn","Website","Notes"];
+let SCORED = [];
+let REMOVED = [];
+let JOB_ID = null;
+let POLL_TIMER = null;
+
+/* ───────────────────────── Upload wiring ────────────────────────────────────── */
+const drop = document.getElementById("drop");
+const file = document.getElementById("file");
+
+drop.addEventListener("click", () => file.click());
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+drop.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("drag");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+file.addEventListener("change", () => { if (file.files[0]) handleFile(file.files[0]); });
+
+async function handleFile(f) {
+  const text = await f.text();
+  const raw = parseCSV(text);
+  if (!raw.length) { alert("No rows found in CSV."); return; }
+
+  SCORED = []; REMOVED = [];
+  for (const r of raw) {
+    const c = cleanRow(r);
+    if (!c.keep) { REMOVED.push({...r, "Removal Reason": c.reason}); continue; }
+    const row = {};
+    OUT_COLUMNS.forEach(col => row[col] = r[col] ?? "");
+    row["Score"] = score(r);
+    SCORED.push(row);
+  }
+  SCORED.sort((a,b) => (b["Score"] - a["Score"]));
+
+  renderStats(raw.length);
+  renderPreview();
+  renderRemoved();
+  document.getElementById("afterUpload").classList.remove("hidden");
+  document.getElementById("enrichSection").classList.remove("hidden");
+  document.getElementById("enrichSection").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function renderStats(rawN) {
+  const scores = SCORED.map(r => r.Score);
+  const mean = scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : "—";
+  const top = scores.length ? scores[0].toFixed(1) : "—";
+  const bat = Math.ceil(SCORED.length / 50);
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="n">${rawN}</div><div class="l">Raw rows</div></div>
+    <div class="stat"><div class="n">${SCORED.length}</div><div class="l">Kept</div></div>
+    <div class="stat"><div class="n">${REMOVED.length}</div><div class="l">Removed</div></div>
+    <div class="stat"><div class="n">${top}</div><div class="l">Top score</div></div>
+    <div class="stat"><div class="n">${mean}</div><div class="l">Avg score</div></div>
+    <div class="stat"><div class="n">${bat}</div><div class="l">Batches (÷50)</div></div>
+  `;
+}
+
+function renderPreview() {
+  const top = SCORED.slice(0, 10);
+  const cols = ["Rank","Licensee Name","Total Units","Counties","Score"];
+  document.getElementById("preview").innerHTML = `
+    <table>
+      <thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+      <tbody>${top.map(r => `<tr>${cols.map(c=>`<td>${(r[c]??"").toString().slice(0,80)}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table>`;
+}
+
+function renderRemoved() {
+  const cols = ["Licensee Name","Unique Addresses","Removal Reason"];
+  document.getElementById("removed").innerHTML = `
+    <table>
+      <thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+      <tbody>${REMOVED.map(r=>`<tr>${cols.map(c=>`<td>${(r[c]??"").toString().slice(0,120)}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table>`;
+}
+
+document.getElementById("showRemoved").addEventListener("click", () => {
+  document.getElementById("removedWrap").classList.toggle("hidden");
+});
+
+document.getElementById("downloadScored").addEventListener("click", () => {
+  download("scored.csv", toCSV(SCORED, OUT_COLUMNS));
+});
+
+/* ───────────────────────── Bridge detection ─────────────────────────────────── */
+function hasBridge() {
+  return !!document.querySelector('meta[name="revwhisper-bridge"]');
+}
+
+function setBridge(status, text) {
+  const dot = document.getElementById("bridgeDot");
+  const txt = document.getElementById("bridgeText");
+  dot.className = "status-dot " + status;
+  txt.textContent = text;
+}
+
+function checkBridge() {
+  if (!hasBridge()) {
+    setBridge("idle", "Extension not installed — enrichment disabled. Install the Rev Whisper extension from extension/ to enable.");
+    document.getElementById("startEnrich").disabled = true;
+    return;
+  }
+  // Ping listener via the bridge
+  window.dispatchEvent(new CustomEvent("revwhisper:enrich-health"));
+}
+
+window.addEventListener("revwhisper:enrich-response", (e) => {
+  const d = e.detail;
+  if (d.event === "health") {
+    if (d.ok) setBridge("ok", `Listener reachable · python ${d.python || "?"}`);
+    else setBridge("err", `Listener unreachable (${d.error || d.status})`);
+    document.getElementById("startEnrich").disabled = !d.ok;
+  } else if (d.event === "start") {
+    if (d.ok) {
+      JOB_ID = d.job_id;
+      document.getElementById("enrichProgress").classList.remove("hidden");
+      document.getElementById("progressText").textContent = `Job ${JOB_ID} started · ${d.total} leads queued`;
+      pollStatus();
+    } else {
+      document.getElementById("enrichHint").textContent = "Start failed: " + (d.error || d.status);
+    }
+  } else if (d.event === "status") {
+    if (!d.ok) return;
+    const cur = d.current || 0; const total = d.total || 1;
+    const pct = Math.round((cur / total) * 100);
+    document.getElementById("progressBar").style.width = pct + "%";
+    document.getElementById("progressText").textContent =
+      `[${cur}/${total}] ${d.last_company || "…"} · ${d.status}`;
+    if (d.status === "completed" || d.status === "failed") {
+      clearInterval(POLL_TIMER);
+      document.getElementById("downloadEnriched").disabled = (d.status !== "completed");
+    }
+  } else if (d.event === "result") {
+    if (d.ok) download(`job_${JOB_ID}_enriched.csv`, d.csv);
+    else alert("Result not ready: " + (d.error || d.status));
+  }
+});
+
+document.getElementById("startEnrich").addEventListener("click", () => {
+  if (!SCORED.length) return;
+  const csv = toCSV(SCORED, OUT_COLUMNS);
+  window.dispatchEvent(new CustomEvent("revwhisper:enrich-start", {
+    detail: { csv, filename: "scored.csv" }
+  }));
+  document.getElementById("enrichHint").textContent = "Handing off to listener…";
+});
+
+function pollStatus() {
+  clearInterval(POLL_TIMER);
+  POLL_TIMER = setInterval(() => {
+    if (!JOB_ID) return;
+    window.dispatchEvent(new CustomEvent("revwhisper:enrich-status", { detail: { jobId: JOB_ID } }));
+  }, 2000);
+}
+
+document.getElementById("downloadEnriched").addEventListener("click", () => {
+  if (!JOB_ID) return;
+  window.dispatchEvent(new CustomEvent("revwhisper:enrich-result", { detail: { jobId: JOB_ID } }));
+});
+
+document.getElementById("toggleLog").addEventListener("click", () => {
+  document.getElementById("logBox").classList.toggle("hidden");
+});
+
+// initial bridge check (extension injects meta tag at document_start)
+setTimeout(checkBridge, 100);
+setInterval(checkBridge, 10000); // re-check every 10s in case listener comes online later
+</script>
+
+</body>
+</html>

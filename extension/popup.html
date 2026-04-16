@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rev Whisper</title>
+<style>
+  :root {
+    --ink:#1e1e1e; --dim:#666; --rule:#e3e3e3; --bg:#fdfdfb;
+    --accent:#4A6741; --accent-dark:#3a5334;
+    --ok:#4A6741; --warn:#b5651d; --err:#a33; --idle:#aaa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    width:340px;background:var(--bg);color:var(--ink);font-size:13px;line-height:1.45;
+  }
+  .hdr{
+    padding:14px 16px 10px;border-bottom:1px solid var(--rule);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .hdr h1{font-size:14px;font-weight:600;letter-spacing:-.2px}
+  .hdr .ver{font-size:11px;color:var(--dim);font-family:"SF Mono",Menlo,monospace}
+  .section{padding:10px 16px;border-bottom:1px solid var(--rule)}
+  .row{display:flex;align-items:flex-start;gap:10px;padding:6px 0}
+  .dot{
+    width:10px;height:10px;border-radius:50%;flex:0 0 10px;margin-top:5px;
+    background:var(--idle);transition:background .2s;
+  }
+  .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)}
+  .dot.err{background:var(--err)} .dot.idle{background:var(--idle)}
+  .dot.pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .r-label{font-weight:600;font-size:13px}
+  .r-detail{color:var(--dim);font-size:11.5px;font-family:"SF Mono",Menlo,monospace;margin-top:2px;word-break:break-all}
+  .meta{padding:10px 16px;font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+  button{
+    font-family:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--accent);
+    background:#fff;color:var(--accent);border-radius:3px;cursor:pointer;font-weight:600;
+  }
+  button:hover{background:var(--accent);color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .jobs{font-family:"SF Mono",Menlo,monospace;font-size:11.5px;color:var(--dim)}
+  .jobs strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .hint{font-size:11px;color:var(--dim);margin-top:4px;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>Rev Whisper bridge</h1>
+  <span class="ver" id="ver">v0.1.0</span>
+</div>
+
+<div class="section">
+  <div class="row">
+    <span class="dot pulse" id="dotListener"></span>
+    <div style="flex:1">
+      <div class="r-label">Python listener</div>
+      <div class="r-detail" id="detListener">Checking http://127.0.0.1:5055…</div>
+    </div>
+  </div>
+  <div class="row">
+    <span class="dot pulse" id="dotCC"></span>
+    <div style="flex:1">
+      <div class="r-label">Claude Code <span style="color:var(--dim);font-weight:400">(OAuth · preferred)</span></div>
+      <div class="r-detail" id="detCC">Checking…</div>
+    </div>
+  </div>
+  <div class="row">
+    <span class="dot pulse" id="dotClaude"></span>
+    <div style="flex:1">
+      <div class="r-label">Claude API <span style="color:var(--dim);font-weight:400">(key · fallback)</span></div>
+      <div class="r-detail" id="detClaude">Checking…</div>
+    </div>
+  </div>
+  <div class="hint" id="summary" style="margin-top:8px"></div>
+</div>
+
+<div class="section">
+  <div class="r-label" style="margin-bottom:4px">Jobs</div>
+  <div class="jobs" id="jobs">—</div>
+</div>
+
+<div class="meta">
+  <span><a href="#" id="openTool">Open tool page</a></span>
+  <button id="refresh">Refresh</button>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

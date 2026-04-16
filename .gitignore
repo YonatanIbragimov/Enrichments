@@ -26,3 +26,7 @@ __pycache__/
 .idea/
 *.swp
 *~
+
+# Listener runtime state (never commit these)
+listener/logs/
+listener/jobs/

@@ -30,6 +30,11 @@ from playwright.async_api import async_playwright
 RESULTS_DIR = Path(__file__).parent / "enriched"
 RESULTS_DIR.mkdir(exist_ok=True)
 
+# Persistent Chromium profile — cookies + logged-in sessions (Apollo, etc.) survive runs.
+# Same profile across all batches so CAPTCHAs are less aggressive and auth sticks.
+PROFILE_DIR = Path.home() / ".revwhisper-profile"
+PROFILE_DIR.mkdir(exist_ok=True)
+
 DELAY_MIN = 2
 DELAY_MAX = 4
 
@@ -455,17 +460,17 @@ async def process_batch(batch_file):
     print(f"═══════════════════════════════════════════")
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
+        ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(PROFILE_DIR),
             headless=False,
             args=["--disable-blink-features=AutomationControlled"],
-        )
-
-        ctx = await browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             viewport={"width": 1280, "height": 800},
         )
-        page_sunbiz = await ctx.new_page()
-        page_google = await ctx.new_page()
+        # Reuse any existing tabs if present, else open new ones
+        existing = ctx.pages
+        page_sunbiz = existing[0] if len(existing) >= 1 else await ctx.new_page()
+        page_google = existing[1] if len(existing) >= 2 else await ctx.new_page()
 
         for i, lead in enumerate(leads):
             if lead["Licensee Name"] in already_done:
@@ -496,7 +501,7 @@ async def process_batch(batch_file):
                 writer.writeheader()
                 writer.writerows(enriched)
 
-        await browser.close()
+        await ctx.close()
 
     # Summary
     print(f"\n═══════════════════════════════════════════")
