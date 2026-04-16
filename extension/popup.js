@@ -1,6 +1,6 @@
 // Popup controller — polls the listener for /health and /claude/ping.
 
-const TOOL_URL_DEFAULT = "https://yonatanibragimov.github.io/enrichment_tool.html";
+const TOOL_URL_DEFAULT = "https://yonatanibragimov.github.io/Enrichments/enrichment_tool.html";
 
 const el = id => document.getElementById(id);
 
