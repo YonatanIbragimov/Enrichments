@@ -22,12 +22,14 @@
   .hidden{display:none!important}
 
   .dropzone{
+    display:block;
     border:2px dashed #cfc9bf;border-radius:6px;padding:40px 24px;text-align:center;
     background:#fff;cursor:pointer;transition:border-color .15s, background .15s;
   }
   .dropzone:hover,.dropzone.drag{border-color:var(--accent);background:#f4f1e9}
   .dropzone strong{font-size:18px;display:block;margin-bottom:6px}
-  .dropzone .sub{color:var(--dim);font-size:14px}
+  .dropzone .sub{display:block;color:var(--dim);font-size:14px}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 
   .btn{
     display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
@@ -79,11 +81,12 @@
 <h2>1. Upload CSV</h2>
 <p>Expected columns: <code>Rank, Licensee Name, Total Units, Unique Addresses, Counties, Cities Served, Phone</code>. Extra columns are ignored. A <code>Score</code> column will be added; blank <code>Owner Name / Owner Email / Owner LinkedIn / Website / Notes</code> columns will be appended.</p>
 
-<label class="dropzone" id="drop">
-  <input type="file" accept=".csv" id="file" hidden>
+<div class="dropzone" id="drop" role="button" tabindex="0">
   <strong>Drop CSV here or click to pick</strong>
   <span class="sub">Nothing is uploaded — cleaning runs entirely in your browser.</span>
-</label>
+</div>
+<input type="file" accept=".csv" id="file" class="visually-hidden">
+
 
 <!-- ─── Step 2: Clean + Score results ─── -->
 <div id="afterUpload" class="hidden">
