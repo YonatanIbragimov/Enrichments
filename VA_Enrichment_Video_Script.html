@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rev Whisper — Video Script</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dune:#32302F; --fern:#4A6741; --white:#FFF; --stone:#E0DCDA;
+    --bg-subtle:#F8F7F6;
+    --heading:'Lora','Georgia',serif;
+    --body:'DM Sans','system-ui',sans-serif;
+    --mono:'DM Mono','SF Mono','Fira Code',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--white);color:var(--dune);font-family:var(--body);
+    font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+
+  /* ─── Topbar (matches other pages) ─── */
+  .topbar{
+    position:sticky;top:0;background:rgba(255,255,255,.92);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--stone);z-index:50;padding:16px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar-left{display:flex;align-items:center;gap:32px}
+  .wordmark{display:flex;align-items:center;gap:10px;font-family:var(--heading);font-size:18px;text-decoration:none}
+  .wordmark .rev{color:var(--fern)} .wordmark .whisper{color:var(--dune)}
+  .topbar-nav{display:flex;gap:20px;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+  .topbar-nav a{color:var(--dune);opacity:.55;text-decoration:none;padding:6px 0;transition:opacity 150ms}
+  .topbar-nav a:hover{opacity:1}
+  .topbar-nav a.active{color:var(--fern);opacity:1}
+  .topbar-meta{font-family:var(--mono);font-size:12px;color:var(--dune);opacity:.55;letter-spacing:.5px}
+
+  /* ─── Page layout ─── */
+  .container{max-width:880px;margin:0 auto;padding:72px 32px 96px}
+
+  .hero{margin-bottom:56px;padding-bottom:32px;border-bottom:1px solid var(--stone)}
+  .eyebrow{font-family:var(--mono);font-size:12px;color:var(--fern);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+  .hero h1{font-family:var(--heading);font-weight:400;font-size:clamp(36px,6vw,56px);line-height:1.08;letter-spacing:-1px;margin-bottom:24px;max-width:700px}
+  .hero-meta{display:flex;gap:40px;margin-top:28px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;color:var(--dune);opacity:.7}
+  .hero-meta .label{text-transform:uppercase;letter-spacing:1.5px;font-size:10px;opacity:.7;display:block;margin-bottom:4px}
+
+  .how{
+    margin:32px 0 48px;padding:24px 28px;background:var(--bg-subtle);border-left:3px solid var(--fern);
+    font-size:15.5px;line-height:1.6;
+  }
+  .how strong{color:var(--dune)}
+
+  /* ─── Scenes ─── */
+  .scene{margin:48px 0;padding-top:32px;border-top:1px solid var(--stone)}
+  .scene:first-of-type{border-top:0;padding-top:0}
+  .scene-head{display:flex;align-items:baseline;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .scene-time{
+    font-family:var(--mono);font-size:13px;color:var(--fern);font-weight:500;
+    letter-spacing:.5px;background:var(--bg-subtle);padding:4px 10px;border-radius:3px;
+    white-space:nowrap;
+  }
+  .scene-title{
+    font-family:var(--heading);font-weight:400;font-size:26px;line-height:1.2;
+    letter-spacing:-.4px;color:var(--dune);flex:1;
+  }
+  .scene-dur{font-family:var(--mono);font-size:12px;color:var(--dune);opacity:.55;letter-spacing:.5px}
+
+  .beat{margin:18px 0;display:grid;grid-template-columns:90px 1fr;gap:20px;align-items:start}
+  @media (max-width:640px){ .beat{grid-template-columns:1fr;gap:6px} }
+
+  .tag{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
+    font-weight:500;padding-top:8px;text-align:right;
+  }
+  .tag.screen{color:var(--dune);opacity:.55}
+  .tag.say{color:var(--fern)}
+  @media (max-width:640px){ .tag{text-align:left;padding-top:0;padding-bottom:2px} }
+
+  .screen-body{
+    font-family:var(--body);font-size:15px;line-height:1.55;color:var(--dune);opacity:.78;
+    padding:8px 0;
+  }
+  .screen-body code{font-family:var(--mono);font-size:13px;background:var(--bg-subtle);padding:2px 6px;border-radius:2px;color:var(--dune);opacity:1}
+
+  /* Large, teleprompter-friendly SAY lines */
+  .say-body{
+    font-family:var(--heading);font-size:22px;line-height:1.45;color:var(--dune);
+    letter-spacing:-.2px;padding:4px 0;
+  }
+  @media (max-width:640px){ .say-body{font-size:19px} }
+  .say-body em{font-style:italic;color:var(--fern)}
+
+  /* ─── Production notes ─── */
+  .notes{
+    margin-top:80px;padding:32px;background:var(--bg-subtle);border:1px solid var(--stone);border-radius:3px;
+  }
+  .notes h2{font-family:var(--heading);font-weight:400;font-size:22px;margin-bottom:16px}
+  .notes ul{padding-left:22px}
+  .notes li{margin:6px 0;font-size:15px;line-height:1.6}
+  .notes code{font-family:var(--mono);font-size:13px;background:var(--white);padding:1px 6px;border-radius:2px}
+
+  /* ─── Print ─── */
+  @media print{
+    body{font-size:13pt}
+    .topbar{display:none}
+    .container{max-width:none;padding:0.5in}
+    .scene{break-inside:avoid}
+    .beat{break-inside:avoid}
+    .notes{break-before:page}
+    .say-body{font-size:16pt}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="wordmark" href="25-49 Listings/enrichment_process.html">
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z" stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22" stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+    </a>
+    <nav class="topbar-nav">
+      <a href="25-49 Listings/enrichment_process.html">Process</a>
+      <a href="25-49 Listings/enriched_leads.html">Leads</a>
+      <a href="VA_Enrichment_SOP.html">VA SOP</a>
+      <a href="VA_Enrichment_Video_Script.html" class="active">Script</a>
+    </nav>
+  </div>
+  <div class="topbar-meta">INTERNAL · VIDEO SCRIPT</div>
+</div>
+
+<div class="container">
+
+  <header class="hero">
+    <div class="eyebrow">Record Once · Teach Forever</div>
+    <h1>Lead Enrichment — How to Fill One Row</h1>
+    <div class="hero-meta">
+      <div><span class="label">Target Runtime</span>~4 minutes</div>
+      <div><span class="label">Pace</span>~150 wpm</div>
+      <div><span class="label">Word Count</span>~540 words spoken</div>
+      <div><span class="label">Format</span>Screen recording + voiceover</div>
+    </div>
+  </header>
+
+  <div class="how">
+    <strong>How to use this script:</strong> Read the <strong style="color:var(--fern)">SAY</strong> lines aloud in your normal voice — they're the big serif text. The <strong>SCREEN</strong> lines are your cues for what to show or click next. Pause between scenes; don't try to talk and click at the same time on your first take.
+  </div>
+
+  <!-- ═══ Scene 1: Cold Open ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">0:00</span>
+      <h2 class="scene-title">Cold open</h2>
+      <span class="scene-dur">~15s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Your batch CSV open in Google Sheets, zoomed in on one blank row.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Hey — quick walkthrough of how to fill one row of the enrichment batch. We're looking for four things: owner name, website, LinkedIn, and email. Every row takes about three or four minutes. Let's do one together.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 2: Orientation ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">0:15</span>
+      <h2 class="scene-title">What you start with</h2>
+      <span class="scene-dur">~15s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Point at the row — highlight <code>Licensee Name</code>, <code>Total Units</code>, <code>Counties</code>.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Here's the row. The first eight columns are already filled — that's the source data from the state. Our job is to fill in the last five columns on the right: Owner Name, Email, LinkedIn, Website, and Notes.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 3: Sunbiz ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">0:30</span>
+      <h2 class="scene-title">Step 1 — Sunbiz for Owner Name</h2>
+      <span class="scene-dur">~45s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">New tab → <code>search.sunbiz.org</code> → "Search by Name".</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Step one — Sunbiz. This is Florida's business registry, and it's where we get the owner's name.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Copy the Licensee Name. Paste into Sunbiz search — <strong>delete the suffix</strong> (LLC, Inc, Corp).</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Copy the licensee name, but before you paste — strip off the LLC, Inc, or Corp. Sunbiz is picky about suffixes. Hit search.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Click the best-matching result.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Pick the result whose name matches closest. If there's an inactive one and an active one, always pick active.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Scroll to "Officer/Director Detail" or "Authorized Person(s) Detail". Highlight the title column.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Scroll down to the officers section. Pick the first officer using this priority: CEO, president, owner, manager, principal, member. If none of those exist, use the registered agent instead.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Copy name → paste into Owner Name cell.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Drop the name into the Owner Name column. That's step one. Hit rate here is basically a hundred percent.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 4: Google Website ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">1:15</span>
+      <h2 class="scene-title">Step 2 — Google for Website</h2>
+      <span class="scene-dur">~40s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">New tab → <code>google.com</code>.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Step two — Google, looking for the company website.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Type, showing quotes: <code>"[Company Name]" Florida vacation rental property management</code></div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Put the company name in quotes, then add "Florida vacation rental property management". Quotes keep Google honest.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Scroll through top 5 results. Cross out LinkedIn, Facebook, Airbnb, VRBO, any <code>.gov</code> site.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Skip LinkedIn, Facebook, Airbnb, VRBO, and any dot-gov site. The first real company website you see — that's the one.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Click through → confirm site loads and mentions the company. Copy URL → paste into Website cell.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Click through to confirm it actually loads and the company name is on the homepage. If it does, paste the URL. If it's broken or unrelated, leave it blank and move on.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 5: DDG LinkedIn ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">1:55</span>
+      <h2 class="scene-title">Step 3 — DuckDuckGo for LinkedIn</h2>
+      <span class="scene-dur">~40s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">New tab → <code>duckduckgo.com</code>.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Step three — LinkedIn. We use DuckDuckGo instead of Google here, because Google blocks LinkedIn searches after about ten of them.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Type: <code>site:linkedin.com/in/ "[Owner Name]" Florida</code></div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Search for <em>site colon linkedin dot com slash in slash</em>, then the owner's name in quotes, plus Florida.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Click the first <code>linkedin.com/in/…</code> result.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Click the first LinkedIn-dot-com-slash-in result. LinkedIn will probably hit you with a login wall — that's fine.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Zoom on the URL bar. Point at the slug: <code>/in/jane-smith-a12b3c</code>.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Look at the URL. The slug — the "jane-smith" part — should match the owner name from Sunbiz. First name OR last name match is enough. If it matches, paste the URL. If not, leave it blank. A wrong LinkedIn is worse than a missing one.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 6: DDG Email ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">2:35</span>
+      <h2 class="scene-title">Step 4 — DuckDuckGo for Email</h2>
+      <span class="scene-dur">~25s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Same DuckDuckGo tab.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Step four — email. Honest heads-up: this one usually finds nothing. Don't spend more than two minutes on it.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Type: <code>"[Owner Name]" "[Company Name]" email</code></div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Search the owner name and company name in quotes, plus the word "email". Scan the result snippets for anything that looks like <em>name at domain dot com</em>.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">If found, copy → paste. Otherwise leave blank.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">If you find one, paste it in. If not, move on. We'll come back for the misses in the last step.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Scene 7: Apollo ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">3:00</span>
+      <h2 class="scene-title">Step 5 — Apollo for the gaps</h2>
+      <span class="scene-dur">~40s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Switch to Google Sheets. Filter for rows where LinkedIn or Email is blank.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Step five — Apollo. Do this at the end of the batch, not per row. Filter the sheet for rows that are still missing LinkedIn or email.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Open <code>apollo.io</code> → People search → Company filter = company name or domain → Location = Florida.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">In Apollo, search People. Put the company name — or better, the website domain — in the Company filter, and set Location to Florida.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Find the person whose name matches. Click through.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Find the person whose name matches Sunbiz. First or last name match. If two people match, pick the one with the most senior title.</div>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Click <strong>Access Email</strong>. Copy email → paste. Copy LinkedIn URL → paste. Add <code>Apollo</code> to Notes.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">Click Access Email. Copy it into the Email column. Grab the LinkedIn URL from their profile. And always tag the Notes column with the word "Apollo" — that way we know which rows came from paid data.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Wrap ═══ -->
+  <section class="scene">
+    <div class="scene-head">
+      <span class="scene-time">3:40</span>
+      <h2 class="scene-title">Wrap</h2>
+      <span class="scene-dur">~20s</span>
+    </div>
+    <div class="beat">
+      <span class="tag screen">Screen</span>
+      <div class="screen-body">Finished row — all five columns filled.</div>
+    </div>
+    <div class="beat">
+      <span class="tag say">Say</span>
+      <div class="say-body">And that's it. Five steps, four data points, usually three to four minutes per row. The full written version of this — with edge cases, troubleshooting, and the batch template CSV — is on the site, linked in the description. If anything breaks or you're not sure about a match, flag it in Notes and move on. When in doubt, leave it blank.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Production notes ═══ -->
+  <aside class="notes">
+    <h2>Production notes (not for camera)</h2>
+    <ul>
+      <li>If you fumble a line, pause 2 seconds and restart the sentence — easier to cut cleanly in post.</li>
+      <li>For best audio: read the <strong>SAY</strong> lines in your normal conversational voice, not "announcer" voice.</li>
+      <li>Zoom in for URL slugs and search queries — small text is unreadable on 1080p.</li>
+      <li>Rough word count: <strong>~540 words</strong> → about 3:40 at a relaxed 150 wpm.</li>
+      <li>If you're over 4 minutes, drop the <code>0:15</code> "what you start with" scene first.</li>
+    </ul>
+  </aside>
+
+</div>
+
+</body>
+</html>
