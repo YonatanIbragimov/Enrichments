@@ -30,3 +30,8 @@ __pycache__/
 # Listener runtime state (never commit these)
 listener/logs/
 listener/jobs/
+
+# Source lead data — local-only, never push
+source/
+**/source_cleaned_scored.csv
+**/raw_*.csv

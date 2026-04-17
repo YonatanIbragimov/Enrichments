@@ -47,7 +47,31 @@ CORS(app, origins=[
     "https://yonatanibragimov.github.io",
     "http://localhost",
     "http://127.0.0.1",
-], supports_credentials=False)
+], supports_credentials=False, expose_headers=["X-Job-Id"])
+
+# Shared secret for tunnel-exposed endpoints. Set REVWHISPER_AUTH_TOKEN in env.
+# Endpoints that mutate state (start a job) require it; reads (/health, /status,
+# /result) do not — they're harmless and rate-limited by being read-only.
+AUTH_TOKEN = os.environ.get("REVWHISPER_AUTH_TOKEN", "").strip()
+
+
+def require_auth():
+    """Return None if OK; else (response, status). Skip when no token configured (dev)."""
+    if not AUTH_TOKEN:
+        return None
+    if request.headers.get("X-Auth", "") != AUTH_TOKEN:
+        return jsonify({"error": "unauthorized"}), 401
+    return None
+
+
+# Map of tier_id → local source CSV path.
+TIER_SOURCES = {
+    "10-24":    ROOT / "10-24 Listings"    / "source_cleaned_scored.csv",
+    "25-49":    ROOT / "25-49 Listings"    / "source_cleaned_scored.csv",
+    "50-99":    ROOT / "50-99 Listings"    / "source_cleaned_scored.csv",
+    "100-199":  ROOT / "100-199 Listings"  / "source_cleaned_scored.csv",
+    "200plus":  ROOT / "200+ Listings"     / "source_cleaned_scored.csv",
+}
 
 JOBS = {}  # in-memory job state; cleared on restart but files persist
 JOBS_LOCK = threading.Lock()
@@ -126,12 +150,17 @@ def tail_worker(job_id, proc):
 def health():
     with JOBS_LOCK:
         running = sum(1 for j in JOBS.values() if j.get("status") == "running")
+    tiers = {tid: {"path": str(p), "exists": p.exists(),
+                   "rows": (sum(1 for _ in open(p)) - 1) if p.exists() else 0}
+             for tid, p in TIER_SOURCES.items()}
     return jsonify({
         "ok": True,
         "enrich_script": str(ENRICH_SCRIPT),
         "python": PYTHON,
         "jobs_total": len(JOBS),
         "jobs_running": running,
+        "auth_required": bool(AUTH_TOKEN),
+        "tiers": tiers,
     })
 
 
@@ -269,6 +298,9 @@ def enrich():
     Body: { "filename": "batch_01.csv", "csv": "Rank,Licensee Name,..." }
     Returns: { "job_id": "...", "status": "running" }
     """
+    auth_err = require_auth()
+    if auth_err: return auth_err
+
     data = request.get_json(silent=True) or {}
     csv_text = data.get("csv", "")
     if not csv_text.strip():
@@ -316,6 +348,57 @@ def enrich():
     threading.Thread(target=tail_worker, args=(job_id, proc), daemon=True).start()
 
     return jsonify({"job_id": job_id, "status": "running", "total": total})
+
+
+@app.post("/enrich/tier/<tier_id>")
+def enrich_tier(tier_id):
+    """
+    Kick off enrichment for a known local tier source. No upload body needed.
+    Returns: { job_id, status, total }
+    """
+    auth_err = require_auth()
+    if auth_err: return auth_err
+
+    src = TIER_SOURCES.get(tier_id)
+    if not src:
+        return jsonify({"error": f"unknown tier '{tier_id}'",
+                        "available": sorted(TIER_SOURCES.keys())}), 404
+    if not src.exists():
+        return jsonify({"error": f"source CSV not built for tier '{tier_id}'",
+                        "expected_path": str(src),
+                        "hint": "run tools/build_tier_csvs.py"}), 404
+
+    csv_text = src.read_text()
+    job_id = uuid.uuid4().hex[:10]
+    paths  = job_paths(job_id)
+    paths["input"].write_text(csv_text)
+    total = sum(1 for _ in csv.DictReader(io.StringIO(csv_text)))
+
+    with JOBS_LOCK:
+        JOBS[job_id] = {
+            "id":           job_id,
+            "status":       "running",
+            "tier":         tier_id,
+            "source":       str(src),
+            "total":        total,
+            "current":      0,
+            "last_company": "",
+            "started_at":   time.time(),
+            "input":        str(paths["input"]),
+            "output":       str(paths["output"]),
+        }
+    save_state(job_id)
+
+    proc = subprocess.Popen(
+        [PYTHON, str(ENRICH_SCRIPT), str(paths["input"])],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=str(TIER_DIR),
+        env={**os.environ, "PYTHONUNBUFFERED": "1"},
+    )
+    threading.Thread(target=tail_worker, args=(job_id, proc), daemon=True).start()
+
+    return jsonify({"job_id": job_id, "status": "running", "tier": tier_id, "total": total})
 
 
 @app.get("/status/<job_id>")

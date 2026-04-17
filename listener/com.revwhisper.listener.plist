@@ -32,6 +32,13 @@
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
     <key>PYTHONUNBUFFERED</key>
     <string>1</string>
+    <!-- Shared secret required by mutating endpoints (POST /enrich, /enrich/tier).
+         Generate with: openssl rand -hex 24 -->
+    <key>REVWHISPER_AUTH_TOKEN</key>
+    <string>REPLACE_WITH_RANDOM_HEX_TOKEN</string>
+    <!-- Optional fallback for the Claude /claude/ping check (OAuth via `claude` CLI is preferred). -->
+    <!-- <key>ANTHROPIC_API_KEY</key>
+    <string>sk-ant-…</string> -->
   </dict>
 </dict>
 </plist>

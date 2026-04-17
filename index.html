@@ -221,6 +221,23 @@
     color: var(--white);
     border-color: var(--fern);
   }
+  button.tier-link {
+    cursor: pointer;
+    font: inherit;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  button.tier-link:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .tier-status {
+    margin-top: 8px;
+    min-height: 14px;
+    line-height: 1.3;
+  }
   .tier.pending {
     opacity: 0.5;
   }
@@ -338,52 +355,65 @@
   <h2>Enrichment Tiers</h2>
   <div class="tier-grid">
 
-    <div class="tier">
+    <div class="tier" data-tier="25-49">
       <div class="tier-num">TIER 01</div>
       <div class="tier-body">
         <h3>25–49 Listings</h3>
         <div class="tier-meta">412 LEADS · 9 BATCHES · ENRICHED &amp; VERIFIED</div>
+        <div class="tier-status" data-status></div>
       </div>
       <div class="tier-links">
         <a class="tier-link" href="25-49%20Listings/enrichment_process.html">Process</a>
         <a class="tier-link" href="25-49%20Listings/enriched_leads.html">View Leads</a>
-        <a class="tier-link primary" href="enrichment_tool.html?tier=25-49">Enrich →</a>
+        <button class="tier-link primary" data-enrich="25-49">Re-enrich →</button>
       </div>
     </div>
 
-    <div class="tier">
+    <div class="tier" data-tier="50-99">
       <div class="tier-num">TIER 02</div>
       <div class="tier-body">
         <h3>50–99 Listings</h3>
-        <div class="tier-meta">NOT YET ENRICHED · ~75 LEADS</div>
+        <div class="tier-meta">NOT YET ENRICHED · ~254 LEADS (post-clean)</div>
+        <div class="tier-status" data-status></div>
       </div>
       <div class="tier-links">
-        <a class="tier-link primary" href="enrichment_tool.html?tier=50-99">Start Enrichment →</a>
+        <button class="tier-link primary" data-enrich="50-99">Start Enrichment →</button>
       </div>
     </div>
 
-    <div class="tier">
+    <div class="tier" data-tier="100-199">
       <div class="tier-num">TIER 03</div>
       <div class="tier-body">
         <h3>100–199 Listings</h3>
-        <div class="tier-meta">NOT YET ENRICHED · ~135 LEADS</div>
+        <div class="tier-meta">NOT YET ENRICHED · ~1451 LEADS (post-clean)</div>
+        <div class="tier-status" data-status></div>
       </div>
       <div class="tier-links">
-        <a class="tier-link primary" href="enrichment_tool.html?tier=100-199">Start Enrichment →</a>
+        <button class="tier-link primary" data-enrich="100-199">Start Enrichment →</button>
       </div>
     </div>
 
-    <div class="tier">
+    <div class="tier" data-tier="200plus">
       <div class="tier-num">TIER 04</div>
       <div class="tier-body">
         <h3>200+ Listings</h3>
-        <div class="tier-meta">NOT YET ENRICHED · ~95 LEADS</div>
+        <div class="tier-meta">NOT YET ENRICHED · ~72 LEADS (post-clean)</div>
+        <div class="tier-status" data-status></div>
       </div>
       <div class="tier-links">
-        <a class="tier-link primary" href="enrichment_tool.html?tier=200plus">Start Enrichment →</a>
+        <button class="tier-link primary" data-enrich="200plus">Start Enrichment →</button>
       </div>
     </div>
 
+  </div>
+
+  <!-- Tunnel/auth setup banner -->
+  <div id="tunnelBanner" style="margin:16px 0 32px;padding:14px 18px;background:var(--bg-subtle);border:1px solid var(--stone);border-left:3px solid var(--fern);font-family:var(--mono);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div id="tunnelStatus">⚙ Configure listener URL to enable tier buttons.</div>
+    <div style="display:flex;gap:8px">
+      <button id="tunnelSetup" class="tier-link" style="padding:6px 12px;font-size:10px">Configure</button>
+      <button id="tunnelClear"  class="tier-link" style="padding:6px 12px;font-size:10px;display:none">Clear</button>
+    </div>
   </div>
 
   <!-- Resources strip -->
@@ -420,8 +450,153 @@
 </div>
 
 <script>
-  // Inject last-deploy time if available
+  // Inject last-deploy time
   document.getElementById('lastUpdate').textContent = 'Last updated · ' + new Date().toISOString().slice(0, 10);
+
+  /* ═══════════════════════════════════════════════════════
+     Tunnel-direct enrichment
+     Stores listener URL + auth token in localStorage after
+     a one-time setup prompt. No extension required.
+     ═══════════════════════════════════════════════════════ */
+
+  const LS_URL = "revwhisper.listener_url";
+  const LS_TOKEN = "revwhisper.auth_token";
+
+  function getConfig() {
+    return {
+      url: (localStorage.getItem(LS_URL) || "").replace(/\/+$/, ""),
+      token: localStorage.getItem(LS_TOKEN) || "",
+    };
+  }
+
+  function saveConfig(url, token) {
+    localStorage.setItem(LS_URL, url.replace(/\/+$/, ""));
+    localStorage.setItem(LS_TOKEN, token);
+  }
+
+  function clearConfig() {
+    localStorage.removeItem(LS_URL);
+    localStorage.removeItem(LS_TOKEN);
+  }
+
+  async function ping() {
+    const { url, token } = getConfig();
+    if (!url) return { ok: false, reason: "not_configured" };
+    try {
+      const r = await fetch(url + "/health", { headers: token ? { "X-Auth": token } : {} });
+      if (!r.ok) return { ok: false, reason: "unreachable", status: r.status };
+      return { ok: true, data: await r.json() };
+    } catch (e) {
+      return { ok: false, reason: "network", error: String(e) };
+    }
+  }
+
+  function setButtonsEnabled(on) {
+    document.querySelectorAll("[data-enrich]").forEach(b => { b.disabled = !on; });
+  }
+
+  async function refreshTunnelStatus() {
+    const r = await ping();
+    const banner = document.getElementById("tunnelStatus");
+    const clearBtn = document.getElementById("tunnelClear");
+    const setupBtn = document.getElementById("tunnelSetup");
+    if (r.ok) {
+      const tiers = r.data.tiers || {};
+      const built = Object.entries(tiers).filter(([_,t]) => t.exists).length;
+      banner.innerHTML = `● <strong>Listener reachable</strong> · ${built}/${Object.keys(tiers).length} tier sources built · auth: ${r.data.auth_required ? "required" : "off"}`;
+      banner.parentElement.style.borderLeftColor = "var(--fern)";
+      clearBtn.style.display = "";
+      setupBtn.textContent = "Change";
+      setButtonsEnabled(true);
+    } else {
+      const msg = {
+        not_configured: "⚙ Configure listener URL to enable tier buttons.",
+        unreachable: `✗ Listener at ${getConfig().url} returned ${r.status}`,
+        network: `✗ Cannot reach ${getConfig().url || "listener"} (network)`,
+      }[r.reason] || `✗ ${r.reason}`;
+      banner.textContent = msg;
+      banner.parentElement.style.borderLeftColor = r.reason === "not_configured" ? "var(--stone)" : "#a33";
+      clearBtn.style.display = (r.reason === "not_configured") ? "none" : "";
+      setupBtn.textContent = "Configure";
+      setButtonsEnabled(false);
+    }
+  }
+
+  function promptSetup() {
+    const { url, token } = getConfig();
+    const newUrl = prompt(
+      "Listener URL (public HTTPS from Tailscale Funnel / cloudflared).\n\nExample: https://revwhisper.tail-abc.ts.net",
+      url
+    );
+    if (newUrl === null) return;
+    const newToken = prompt(
+      "Auth token (must match REVWHISPER_AUTH_TOKEN on the Mac mini).\nLeave blank if your listener has no token set.",
+      token
+    );
+    if (newToken === null) return;
+    saveConfig(newUrl.trim(), newToken.trim());
+    refreshTunnelStatus();
+  }
+
+  document.getElementById("tunnelSetup").addEventListener("click", promptSetup);
+  document.getElementById("tunnelClear").addEventListener("click", () => {
+    if (confirm("Clear stored listener URL and token?")) { clearConfig(); refreshTunnelStatus(); }
+  });
+
+  /* ─── Tier button handler ─── */
+  document.querySelectorAll("[data-enrich]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const tier = btn.getAttribute("data-enrich");
+      const { url, token } = getConfig();
+      if (!url) { promptSetup(); return; }
+      const row = btn.closest(".tier");
+      const statusEl = row.querySelector("[data-status]");
+      btn.disabled = true;
+      const oldLabel = btn.textContent;
+      btn.textContent = "Starting…";
+      statusEl.textContent = "";
+      try {
+        const r = await fetch(`${url}/enrich/tier/${encodeURIComponent(tier)}`, {
+          method: "POST",
+          headers: token ? { "X-Auth": token } : {},
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        statusEl.innerHTML = `<span style="font-family:var(--mono);font-size:11px;color:var(--fern)">▶ Job ${data.job_id} · ${data.total} leads · polling…</span>`;
+        pollJob(statusEl, url, token, data.job_id, btn, oldLabel);
+      } catch (e) {
+        statusEl.innerHTML = `<span style="font-family:var(--mono);font-size:11px;color:#a33">✗ ${e.message}</span>`;
+        btn.disabled = false;
+        btn.textContent = oldLabel;
+      }
+    });
+  });
+
+  async function pollJob(statusEl, url, token, jobId, btn, oldLabel) {
+    const interval = setInterval(async () => {
+      try {
+        const r = await fetch(`${url}/status/${jobId}`, { headers: token ? { "X-Auth": token } : {} });
+        if (!r.ok) return;
+        const s = await r.json();
+        const pct = s.total ? Math.round((s.current / s.total) * 100) : 0;
+        statusEl.innerHTML = `<span style="font-family:var(--mono);font-size:11px;color:var(--fern)">[${s.current||0}/${s.total||'?'}] ${pct}% · ${s.last_company || "…"}</span>`;
+        if (s.status === "completed" || s.status === "failed") {
+          clearInterval(interval);
+          const downloadUrl = `${url}/result/${jobId}`;
+          statusEl.innerHTML = s.status === "completed"
+            ? `<a href="${downloadUrl}" style="font-family:var(--mono);font-size:11px;color:var(--fern);text-decoration:underline">✓ Complete — download ${jobId}.csv</a>`
+            : `<span style="font-family:var(--mono);font-size:11px;color:#a33">✗ Failed — check listener logs</span>`;
+          btn.disabled = false;
+          btn.textContent = oldLabel;
+        }
+      } catch { /* ignore transient errors */ }
+    }, 2000);
+  }
+
+  /* Initial state + periodic recheck */
+  setButtonsEnabled(false);
+  refreshTunnelStatus();
+  setInterval(refreshTunnelStatus, 30000);
 </script>
 
 </body>
