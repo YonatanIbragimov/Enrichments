@@ -68,8 +68,29 @@
 </head>
 <body>
 
+<nav style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--rule);display:flex;gap:18px;flex-wrap:wrap">
+  <a href="index.html" style="color:var(--dim);text-decoration:none">← Home</a>
+  <a href="25-49 Listings/enrichment_process.html" style="color:var(--dim);text-decoration:none">Process</a>
+  <a href="25-49 Listings/enriched_leads.html" style="color:var(--dim);text-decoration:none">Leads</a>
+  <a href="VA_Enrichment_SOP.html" style="color:var(--dim);text-decoration:none">VA SOP</a>
+  <a href="VA_Enrichment_Video_Script.html" style="color:var(--dim);text-decoration:none">Script</a>
+  <a href="enrichment_tool.html" style="color:var(--accent);text-decoration:none;font-weight:600;margin-left:auto">Enrich</a>
+</nav>
+
 <h1>Clean, Score &amp; Enrich</h1>
-<p class="meta">Upload a raw Florida STR licensee CSV → clean + score in your browser → optionally hand off to the local enrichment listener.</p>
+<p class="meta" id="tierBadge">Upload a raw Florida STR licensee CSV → clean + score in your browser → optionally hand off to the local enrichment listener.</p>
+<script>
+  // Surface the tier from ?tier=… so the user knows which one they came from
+  (() => {
+    const t = new URLSearchParams(location.search).get("tier");
+    if (!t) return;
+    const labels = {"25-49":"25–49 Listings","50-99":"50–99 Listings","100-199":"100–199 Listings","200plus":"200+ Listings"};
+    const label = labels[t] || t;
+    document.getElementById("tierBadge").innerHTML =
+      `<span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 10px;border-radius:3px;font-size:13px;font-weight:600;margin-right:8px">TIER · ${label}</span>` +
+      `Upload the raw CSV for this tier → clean + score in your browser → hand off to the listener.`;
+  })();
+</script>
 
 <!-- ─── Bridge status ─── -->
 <div class="note" id="bridgeStatus">
