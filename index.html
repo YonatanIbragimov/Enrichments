@@ -41,20 +41,63 @@
     pointer-events: none;
     z-index: 0;
   }
+
+  /* ─── Topbar (matches other pages) ─── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--stone);
+    z-index: 50;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 32px; }
+  .topbar .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--heading);
+    font-size: 18px;
+    text-decoration: none;
+    margin: 0;
+  }
+  .topbar-nav {
+    display: flex;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .topbar-nav a {
+    color: var(--dune);
+    opacity: .55;
+    text-decoration: none;
+    padding: 6px 0;
+    transition: opacity 150ms var(--ease);
+  }
+  .topbar-nav a:hover { opacity: 1; }
+  .topbar-nav a.active { color: var(--fern); opacity: 1; }
+  .topbar-nav a.cta { color: var(--fern); opacity: 1; }
+  .topbar-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dune);
+    opacity: .55;
+    letter-spacing: .5px;
+  }
+
   .container {
     position: relative;
     z-index: 1;
     max-width: 980px;
     margin: 0 auto;
-    padding: 120px 32px 80px;
-  }
-  .wordmark {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-family: var(--heading);
-    font-size: 20px;
-    margin-bottom: 64px;
+    padding: 72px 32px 80px;
   }
   .wordmark .rev { color: var(--fern); }
   .wordmark .whisper { color: var(--dune); }
@@ -243,17 +286,30 @@
 
 <div class="dots"></div>
 
-<div class="container">
-
-  <div class="wordmark">
-    <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-      <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z"
-            stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22"
-            stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M6 20C6 12 12 6 22 6H26C36 6 42 12 42 20C42 28 36 34 26 34H20L12 40V34C8.5 32 6 27 6 20Z"
+              stroke="#32302F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15 21C15 21 17 14 19.5 14C22 14 22 28 24.5 28C27 28 27 16 29 16C31 16 32 22 33 22"
+              stroke="#32302F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span><span class="rev">Rev</span> <span class="whisper">Whisper</span></span>
+    </a>
+    <nav class="topbar-nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="25-49 Listings/enrichment_process.html">Process</a>
+      <a href="25-49 Listings/enriched_leads.html">Leads</a>
+      <a href="VA_Enrichment_SOP.html">VA SOP</a>
+      <a href="VA_Enrichment_Video_Script.html">Script</a>
+      <a href="enrichment_tool.html" class="cta">Enrich →</a>
+    </nav>
   </div>
+  <div class="topbar-meta">INTERNAL · LEAD ENRICHMENT</div>
+</div>
+
+<div class="container">
 
   <div class="eyebrow">Florida STR Outreach · Internal Enrichment</div>
   <h1>Florida short-term rental property managers, enriched and ready for outreach.</h1>
